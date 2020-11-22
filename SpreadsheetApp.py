@@ -138,7 +138,6 @@ class Button(UIElement):
     def getWidth(self):
         return self.width
 
-
 class Rectangle(UIElement):
     def __init__(self, name, x, y, **props):
         super().__init__(name, x, y, props)
@@ -172,10 +171,10 @@ class Text(UIElement):
         return 0
 
 class Scene(UIElement):
-    def __init__(self, name, x, y, **props):
-        super().__init__(name, x, y, props)
-        self.width = props.get('width', 0)
-        self.height = props.get('height', 0)
+    def __init__(self):
+        self.width = 600
+        self.height = 600
+        super().__init__('scene', 0, 0, {})
 
         self.appendChild(Button('button1', 100, 50, text='hello',
                                 action=self.toggleButton2))
@@ -202,21 +201,19 @@ class Scene(UIElement):
 class App(CMUApp, UIElement):
     instance = None
 
-    def __init__(self, width, height):
+    def __init__(self, scene):
         UIElement.__init__(self, 'root', 0, 0, {})
-        self.width = width
-        self.height = height
+        self.width = scene.getWidth()
+        self.height = scene.getHeight()
         # IMPORTANT: set autorun to false or init will never finish!
         CMUApp.__init__(self, width=self.width, height=self.height,
                         autorun=False)
         self.keyListeners = []
-        self.appendChild(Scene('scene', 0, 0,
-                               width=self.width, height=self.height))
+        self.appendChild(scene)
 
     @staticmethod
-    def start():
-        # TODO: Put app dimensions somewhere more obvious
-        App.instance = App(600, 600)
+    def load(scene):
+        App.instance = App(scene)
         App.instance.run()
 
     def mousePressed(self, event):
@@ -249,4 +246,4 @@ class App(CMUApp, UIElement):
     def getHeight(self):
         return self.height
 
-App.start()
+App.load(Scene())
