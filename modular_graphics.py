@@ -31,7 +31,6 @@ class UIElement(ABC):
         self.childIds = {}
 
     def draw(self, canvas: RelativeCanvas):
-        print('draw', self.name, self.x, self.y)
         for child in self.children:
             child.draw(RelativeCanvas(canvas.canvas, child.x, child.y))
 
@@ -67,6 +66,9 @@ class UIElement(ABC):
             self.children.remove(self.childIds[name])
             del self.childIds[name]
 
+    def removeAllChildren(self):
+        self.children = []
+
     def onClick(self, x, y):
         pass
 
@@ -74,17 +76,22 @@ class UIElement(ABC):
         pass
 
     def makeKeyListener(self):
-        listeners = App.instance.keyListeners
+        listeners = App.keyListeners
         if self not in listeners:
             listeners.append(self)
 
     def resignKeyListener(self):
-        listeners = App.instance.keyListeners
+        listeners = App.keyListeners
         if self in listeners:
             listeners.remove(self)
 
 class App(CMUApp, UIElement):
     instance = None
+
+    # TODO: Making this class-level feels wrong, but we need it to be accessible
+    #       before App is finished initing (otherwise we can't register key
+    #       listeners in `initChildren()`)
+    keyListeners = []
 
     def __init__(self, scene):
         UIElement.__init__(self, 'root', 0, 0, {})
@@ -93,7 +100,6 @@ class App(CMUApp, UIElement):
         # IMPORTANT: set autorun to false or init will never finish!
         CMUApp.__init__(self, width=self.width, height=self.height,
                         autorun=False)
-        self.keyListeners = []
         self.appendChild(scene)
 
     @staticmethod
@@ -129,7 +135,7 @@ class App(CMUApp, UIElement):
     #                                offsetX + child.x, offsetY + child.y)
 
     def keyPressed(self, event):
-        for listener in self.keyListeners:
+        for listener in App.keyListeners:
             listener.onKeypress(event)
 
     def redrawAll(self, canvas):

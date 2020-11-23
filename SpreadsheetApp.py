@@ -1,20 +1,36 @@
+# SpreadsheetApp.py
+# Joseph Rotella
+#
+# Main code file -- contains UI & logic code for spreadsheet app
+
 import string
+from enum import Enum
 
 from modular_graphics import UIElement, App
+
+class Direction(Enum):
+    RIGHT = (0, 1)
+    LEFT = (0, -1)
+    UP = (-1, 0)
+    DOWN = (1, 0)
 
 class SpreadsheetGrid(UIElement):
     def __init__(self, name, x, y, **props):
         super().__init__(name, x, y, props)
-        self.numRows = 10
-        self.numCols = 4
+        self.numRows = 20
+        self.numCols = 7
         self.rowHeight = 25
         self.colWidth = 100
         self.siderWidth = 25
+        self.cells = {}
+        self.curTopRow = 0
+        self.curLeftCol = 0
+        self.activeCell = None
 
     def initChildren(self):
         for headerNum in range(self.numCols):
             x = headerNum * self.colWidth + self.siderWidth  # skip over siders
-            label = chr(ord('A') + headerNum)
+            label = chr(ord('A') + headerNum + self.curLeftCol)
             self.appendChild(TextField(f'H{headerNum}', x, 0,
                                        placeholder='', editable=False,
                                        text=label, width=self.colWidth,
@@ -23,9 +39,10 @@ class SpreadsheetGrid(UIElement):
 
         for siderNum in range(self.numRows):
             y = (1 + siderNum) * self.rowHeight  # don't label headers
+            label = siderNum + self.curTopRow + 1
             self.appendChild(TextField(f'H{headerNum}', 0, y,
                                        placeholder='', editable=False,
-                                       text=str(siderNum + 1),
+                                       text=str(label),
                                        width=self.siderWidth, fill='lightgray',
                                        height=self.rowHeight, align='center'))
 
@@ -33,15 +50,76 @@ class SpreadsheetGrid(UIElement):
             for colNum in range(self.numCols):
                 x = colNum * self.colWidth + self.siderWidth  # skip siders
                 y = (1 + rowNum) * self.rowHeight  # skip top row -- headers
+
+                cellRow = rowNum + self.curTopRow
+                cellCol = colNum + self.curLeftCol
+
+                existingText = self.cells.get(f'{cellRow},{cellCol}', '')
+                # TODO: Ensure that text field properly truncates when scrolling
+                #       (may want to move truncation logic to TextField)
                 self.appendChild(TextField(f'{rowNum},{colNum}', x, y,
                                            placeholder='', width=self.colWidth,
-                                           height=self.rowHeight))
+                                           height=self.rowHeight,
+                                           text=existingText,
+                                           onChange=self.saveCell,
+                                           onActivate=self.setActiveCell))
+
+        # TODO: Add "preview" at the bottom
+        # self.appendChild(TextField('preview', placeholder='',
+        #                            width=self.getWidth(), height=self.rowHeight,
+        #                            editable=False, text=existingText))
+
+        self.makeKeyListener()
+
+    # called by text field after new value entered
+    def saveCell(self, sender):
+        row, col = map(lambda x: int(x), sender.name.split(','))
+        row += self.curTopRow
+        col += self.curLeftCol
+        cellLabel = f'{row},{col}'
+        if sender.text == '' and cellLabel in self.cells:
+            del self.cells[cellLabel]
+        else:
+            self.cells[cellLabel] = sender.text
+
+        # at least for now, onChange and "onDeactivate" are the same thing
+        self.activeCell = None
+
+    def scroll(self, direction):
+        # save current cell if we're in one
+        if self.activeCell:
+            self.activeCell.deactivate()
+
+        drow, dcol = direction.value
+        self.curTopRow += drow
+        self.curLeftCol += dcol
+        self.removeAllChildren()
+        self.initChildren()
 
     def getWidth(self):
-        return self.numCols * self.colWidth
+        return self.numCols * self.colWidth + self.siderWidth
 
     def getHeight(self):
-        return self.numRows * self.rowHeight
+        return (1 + self.numRows) * self.rowHeight
+
+    def setActiveCell(self, sender):
+        if self.activeCell:
+            self.activeCell.deactivate()
+        self.activeCell = sender
+
+    def onClick(self, x, y):
+        if self.activeCell:
+            self.activeCell.deactivate()
+
+    def onKeypress(self, event):
+        if event.key == 'Right' and self.curLeftCol < 26 - self.numCols:
+            self.scroll(Direction.RIGHT)
+        elif event.key == 'Left' and self.curLeftCol > 0:
+            self.scroll(Direction.LEFT)
+        elif event.key == 'Up' and self.curTopRow > 0:
+            self.scroll(Direction.UP)
+        elif event.key == 'Down':
+            self.scroll(Direction.DOWN)
 
 class TextField(UIElement):
     def __init__(self, name, x, y, **props):
@@ -53,6 +131,8 @@ class TextField(UIElement):
         self.paddingX = 10
         self.paddingY = 5
 
+    # TODO: Is recreating everything every time going to become too costly?
+    #       If so, could try to change (x, y) of existing cells.
     def initChildren(self):
         placeholder = self.props.get('placeholder', 'Enter text')
         fill = self.props.get('fill', None)
@@ -76,22 +156,25 @@ class TextField(UIElement):
     def onClick(self, x, y):
         if self.active:
             self.deactivate()
-        else:
+        elif self.props.get('editable', True):
             self.activate()
 
     def activate(self):
         self.removeChild('placeholder')
-        self.getChild('border').props['fill'] = 'gray'
+        self.getChild('border').props['fill'] = 'lightblue'
         self.makeKeyListener()
         self.active = True
+        if 'onActivate' in self.props:
+            self.props['onActivate'](self)
 
     def deactivate(self):
         self.active = False
         self.getChild('border').props['fill'] = None
         self.resignKeyListener()
+        if 'onChange' in self.props:
+            self.props['onChange'](self)
 
     def onKeypress(self, event):
-        print(event.key)
         if event.key == 'Enter' or event.key == 'Escape':
             self.deactivate()
             return
@@ -144,11 +227,9 @@ class Rectangle(UIElement):
 
     def draw(self, canvas):
         fill = self.props.get('fill', None)
-        print('draw', self.name, self.x, self.y)
         canvas.createRectangle(0, 0, self.width, self.height, fill=fill)
 
     def getWidth(self):
-        print(self.name, self.x, self.y)
         return self.width
 
     def getHeight(self):
@@ -173,12 +254,12 @@ class Text(UIElement):
 
 class Scene(UIElement):
     def __init__(self):
-        self.width = 600
-        self.height = 600
-        super().__init__('scene', 0, 10, {})
+        self.width = 750
+        self.height = 550
+        super().__init__('scene', 0, 0, {})
 
     def initChildren(self):
-        self.appendChild(SpreadsheetGrid('grid', 100, 100))
+        self.appendChild(SpreadsheetGrid('grid', 5, 5))
 
     def getWidth(self):
         return self.width
