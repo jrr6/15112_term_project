@@ -1,5 +1,5 @@
 # SpreadsheetApp.py
-# Joseph Rotella
+# Joseph Rotella (jrotella, F0)
 #
 # Main code file -- contains UI & logic code for spreadsheet app
 
@@ -54,6 +54,9 @@ class SpreadsheetGrid(UIElement):
                 cellRow = rowNum + self.curTopRow
                 cellCol = colNum + self.curLeftCol
 
+                # TODO: It may be more efficient to index rows numerically
+                #       via row * maxElsPerRow + col (that way we don't suffer
+                #       the overhead of dealing with strings)
                 existingText = self.cells.get(f'{cellRow},{cellCol}', '')
                 # TODO: Ensure that text field properly truncates when scrolling
                 #       (may want to move truncation logic to TextField)

@@ -1,5 +1,5 @@
 # modular_graphics.py
-# Joseph Rotella
+# Joseph Rotella (jrotella, F0)
 #
 # A framework atop 112 graphics that allows for modular UI elements with
 # independent states and event-driven design patterns.
@@ -120,19 +120,6 @@ class App(CMUApp, UIElement):
             element.onClick(eventX, eventY)
         for child in element.children:
             self.processMouseEvent(child, eventX, eventY)
-
-    # FOR POSTERITY: This assumes that each element stores its (x,y) position
-    # RELATIVE to its parent. This approach proved headache-inducing (in other
-    # areas of the code), so we're using the simpler approach of storing
-    # absolute (x,y) with every element.
-    # def processMouseEvent(self, element: UIElement, eventX, eventY,
-    #                       offsetX, offsetY):
-    #     if (offsetX <= eventX <= offsetX + element.getWidth()
-    #             and offsetY <= eventY <= offsetY + element.getHeight()):
-    #         element.onClick(eventX - offsetX, eventY - offsetY)
-    #     for child in element.children:
-    #         self.processMouseEvent(child, eventX, eventY,
-    #                                offsetX + child.x, offsetY + child.y)
 
     def keyPressed(self, event):
         for listener in App.keyListeners:
