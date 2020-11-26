@@ -10,13 +10,15 @@ class Cell(object):
         self.raw = ''
         self.formula = None
 
+    # FIXME: We shouldn't be creating a cell for every visible grid spot!
     _cells = {}
 
     @staticmethod
-    def get(row, col):
-        if (row, col) not in Cell._cells:
-            Cell._cells[row, col] = Cell()
-        return Cell._cells[row, col]
+    def getValue(row, col):
+        if (row, col) in Cell._cells:
+            return Cell._cells[row, col].value()
+        else:
+            return ''
 
     @staticmethod
     def delete(row, col):
@@ -25,10 +27,16 @@ class Cell(object):
 
     # Sets raw value of cell as well as formula, if applicable
     # NOTE: will throw if formula illegal (i.e., syntax error)
-    def setRaw(self, text):
-        self.raw = text
-        if self.raw[0] == '=':
-            self.formula = Formula.fromText(self.raw)
+    @staticmethod
+    def setRaw(row, col, text):
+        if (row, col) in Cell._cells:
+            cell = Cell._cells[row, col]
+        else:
+            cell = Cell()
+            Cell._cells[row, col] = cell
+        cell.raw = text
+        if cell.raw[0] == '=':
+            cell.formula = Formula.fromText(cell.raw)
 
     # Returns computed value of cell (with appropriate type/formula result)
     def value(self):
@@ -39,6 +47,13 @@ class Cell(object):
                 return int(self.raw)
             except ValueError:
                 return self.raw
+
+    def __repr__(self):
+        rep = f'Cell({self.raw}'
+        if self.formula:
+            rep += f' -> {self.formula}'
+        rep += ')'
+        return rep
 
 # represents a formula in a cell, where a formula is composed of an operator
 # applied to multiple operands, each of which could be another formula,

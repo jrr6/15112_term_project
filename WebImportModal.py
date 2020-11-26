@@ -41,7 +41,7 @@ class Modal(UIElement):
     def submit(self, sender):
         print('submitted')
         if self.input:
-            inputValue = self.getChild("modal-input-field").text
+            inputValue = self.getChild("modal-input-field").displayText
         else:
             inputValue = None
 

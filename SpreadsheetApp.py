@@ -2,13 +2,12 @@
 # Joseph Rotella (jrotella, F0)
 #
 # Main code file -- contains UI & logic code for spreadsheet app
-
+import string
 from enum import Enum
 
 from formulas import Cell
 from modular_graphics import UIElement, App
 from modular_graphics.input_elements import TextField
-from WebImportModal import Modal
 
 class Direction(Enum):
     RIGHT = (0, 1)
@@ -58,7 +57,7 @@ class SpreadsheetGrid(UIElement):
                 cellRow = rowNum + self.curTopRow
                 cellCol = colNum + self.curLeftCol
 
-                existingText = str(Cell.get(cellRow, cellCol).value())
+                existingText = str(Cell.getValue(cellRow, cellCol))
                 # TODO: Ensure that text field properly truncates when scrolling
                 #       (may want to move truncation logic to TextField)
                 self.appendChild(TextField(f'{rowNum},{colNum}', x, y,
@@ -69,10 +68,10 @@ class SpreadsheetGrid(UIElement):
                                            onActivate=self.setActiveCell,
                                            onSelect=self.setSelectedCells))
 
-        # TODO: Add "preview" at the bottom
-        # self.appendChild(TextField('preview', placeholder='',
-        #                            width=self.getWidth(), height=self.rowHeight,
-        #                            editable=False, text=existingText))
+        previewY = (1 + self.numRows) * self.rowHeight
+        self.appendChild(TextField('preview', 0, previewY,  placeholder='',
+                                   width=self.getWidth(), height=self.rowHeight,
+                                   editable=False))
 
         self.makeKeyListener()
 
@@ -80,20 +79,22 @@ class SpreadsheetGrid(UIElement):
     # NOTE: this might be called by a selected-but-not-active cell,
     #       so ALWAYS use sender instead of (possibly-None) self.activeCell
     def saveCell(self, sender):
+        print(Cell._cells.keys())
         row, col = map(lambda x: int(x), sender.name.split(','))
         row += self.curTopRow
         col += self.curLeftCol
-        if sender.text == '':
+        if sender.displayText == '':
             Cell.delete(row, col)
         else:
             try:
-                Cell.get(row, col).setRaw(sender.text)
+                print(f'saving cell {sender.name}')
+                Cell.setRaw(row, col, sender.displayText)
             except:
                 sender.setText('SYNTAX-ERROR')
                 return
 
             try:
-                sender.setText(str(Cell.get(row, col).value()))
+                sender.setText(str(Cell.getValue(row, col)))
             except:
                 sender.setText('RUNTIME-ERROR')
 
@@ -104,7 +105,7 @@ class SpreadsheetGrid(UIElement):
     def scroll(self, direction):
         # save current cell if we're in one
         if self.activeCell:
-            self.activeCell.deactivate()
+            self.activeCell.finishEditing()
 
         drow, dcol = direction.value
         self.curTopRow += drow
@@ -122,48 +123,70 @@ class SpreadsheetGrid(UIElement):
 
     def setActiveCell(self, sender):
         if self.activeCell:
-            self.activeCell.deactivate()
+            self.activeCell.finishEditing()
         self.activeCell = sender
 
     def setSelectedCells(self, sender):
-        print(sender.name)
+        if self.activeCell:
+            self.activeCell.deactivate()
+            self.activeCell = None
         if sender.name[0] == 'H':  # whole column
             for cell in self.selectedCells:
+                # TODO: we should also finishEditing, but first we need to figure
+                #       out how the heck we're managing to save without it...
                 cell.deactivate()
+                cell.deselect()
             col = sender.name[1:]
-            self.selectedCells = [cell for cell in self.children
-                                  if cell.name[cell.name.find(',') + 1:] == col]
+            self.selectedCells =\
+                [cell for cell in self.children
+                 if SpreadsheetGrid.rowColFromCellName(cell.name)[1] == col]
             for cell in self.selectedCells:
-                cell.select(True)
+                cell.select(silent=True)
         elif sender.name[0] == 'S':  # whole row
             for cell in self.selectedCells:
+                # TODO: See above
                 cell.deactivate()
+                cell.deselect()
             row = sender.name[1:]
-            self.selectedCells = [cell for cell in self.children
-                                  if cell.name[:cell.name.find(',')] == row]
+            self.selectedCells =\
+                [cell for cell in self.children
+                 if SpreadsheetGrid.rowColFromCellName(cell.name)[0] == row]
             for cell in self.selectedCells:
-                cell.select(True)
+                cell.select(silent=True)
         else:  # individual cell
             for cell in self.selectedCells:
                 if cell is not sender:  # clicking cell twice doesn't deselect
+                    # TODO: See above
                     cell.deactivate()
+                    cell.deselect()
             self.selectedCells = [sender]
 
-    def onClick(self, event):
-        if self.activeCell:
-            self.activeCell.deactivate()
+        if len(self.selectedCells) == 1:
+            selectedRow, selectedCol = SpreadsheetGrid.rowColFromCellName(
+                self.selectedCells[0].name)
+            self.getChild('preview').setText(Cell.getValue(selectedRow,
+                                                           selectedCol))
 
     def onKeypress(self, event):
-        if event.key == 'Right' and self.curLeftCol < 26 - self.numCols:
-            self.scroll(Direction.RIGHT)
-        elif event.key == 'Left' and self.curLeftCol > 0:
-            self.scroll(Direction.LEFT)
-        elif event.key == 'Up' and self.curTopRow > 0:
-            self.scroll(Direction.UP)
-        elif event.key == 'Down':
-            self.scroll(Direction.DOWN)
+        if event.optionDown:
+            if event.key == 'Right' and self.curLeftCol < 26 - self.numCols:
+                self.scroll(Direction.RIGHT)
+            elif event.key == 'Left' and self.curLeftCol > 0:
+                self.scroll(Direction.LEFT)
+            elif event.key == 'Up' and self.curTopRow > 0:
+                self.scroll(Direction.UP)
+            elif event.key == 'Down':
+                self.scroll(Direction.DOWN)
+        else:
+            if self.selectedCells == []:
+                return
+            lastSelection = self.selectedCells[-1]
+            lastRow, lastCol = SpreadsheetGrid.rowColFromCellName(
+                lastSelection.name)
+            # TODO: Implement cell navigation via keyboard input
+
         # testing modals
-        elif event.key == 'r':
+        # if event.key == 'r':
             # modalWidth, modalHeight = 500, 300
             # modalX = self.getWidth() // 2 - modalWidth // 2
             # modalY = self.getHeight() // 2 - modalHeight // 2
@@ -172,7 +195,15 @@ class SpreadsheetGrid(UIElement):
             #                        height=modalHeight,
             #                        message='Enter your favorite color:',
             #                        input=True))
-            pass
+
+    # returns row and column for cell with given name.
+    # if name doesn't represent a body cell (e.g., header/sider/preview),
+    # returns -1, -1
+    @staticmethod
+    def rowColFromCellName(name):
+        if name[0] not in string.digits:
+            return ['-1', '-1']
+        return name.split(',')
 
 class Scene(UIElement):
     def __init__(self):

@@ -5,6 +5,7 @@
 import string
 import time
 
+from formulas import Cell
 from modular_graphics.atomic_elements import Rectangle, Text
 from modular_graphics import UIElement
 
@@ -16,10 +17,12 @@ class TextField(UIElement):
         self.selected = False
         self.height = props.get('height', 25)
         self.width = props.get('width', 100)
-        self.text = props.get('text', '')
+        self.displayText = props.get('text', '')
+        self.sourceText = props.get('text', '')
         self.paddingX = 10
         self.paddingY = 5
-        self.visibleChars = 13  # TODO: Actually compute this using width/font?
+        # TODO: Actually compute visibleChars using width/font?
+        self.visibleChars = props.get('visibleChars', 13)
         self.doubleClickStart = 0
         self.kDoubleClickDelay = 0.75  # ms
 
@@ -41,7 +44,7 @@ class TextField(UIElement):
         self.appendChild(Text('placeholder', 10, 5, text=placeholder,
                               fill='gray', anchor='nw'))
         self.appendChild(Text('input', textX, textY,
-                              text=self.text[-self.visibleChars:],
+                              text=self.displayText[-self.visibleChars:],
                               anchor=textAnchor))
 
     def onClick(self, event):
@@ -55,13 +58,15 @@ class TextField(UIElement):
             self.doubleClickStart = now
 
     def select(self, silent=False):
-        # uneditable cells can be selected (can't be edited), but don't auto-
-        # update UI (button-esque)
-        self.selected = True
-        self.makeKeyListener()
+        # only editable cells meaningfully convey "selection" feedback
         if self.props.get('editable', True):
+            self.selected = True
+            self.makeKeyListener()
             self.getChild('border').props['borderColor'] = 'blue'
             self.getChild('border').props['borderWidth'] = 2
+
+        # however, uneditable cells can still make a selection call (so they
+        # can serve as a sort of button)
         if 'onSelect' in self.props and not silent:
             self.props['onSelect'](self)
 
@@ -74,44 +79,56 @@ class TextField(UIElement):
         if 'onActivate' in self.props:
             self.props['onActivate'](self)
 
-    def deactivate(self):
-        # deselect
+    # deselects the cell
+    def deselect(self):
         self.selected = False
+        self.doubleClickStart = 0  # don't jump to activation if clicked again
         self.resignKeyListener()
         self.getChild('border').props['borderColor'] = 'black'
         self.getChild('border').props['borderWidth'] = 1
 
-        # deactivate
+    # exits active (editing) mode WITHOUT saving (call finishEditing to save!)
+    # NOTE: does NOT deselect (cells stay selected after editing finishes!)
+    def deactivate(self):
         self.active = False
         self.getChild('border').props['fill'] = None
         self._clipTextForEditing(False)
+
+    # saves the current cell text (via the parent's method), then deactivates
+    def finishEditing(self):
         if 'onChange' in self.props:
             self.props['onChange'](self)
+        self.deactivate()
 
     def onKeypress(self, event):
         # key listeners that apply if selected OR active
         if event.key == 'Enter':
             if self.active:
-                self.deactivate()
+                self.finishEditing()
             elif self.selected and self.props.get('editable', True):
                 self.activate()
         elif event.key == 'Escape':
-            self.deactivate()  # also deselects
+            if self.active:
+                # deactivate WITHOUT saving
+                self.deactivate()
+            else:
+                self.deselect()
             return
         elif event.key == 'Delete':
             if (self.selected and not self.active
                     and self.props.get('editable', True)):
                 # Clear the cell and call appropriate listeners
-                self.text = ''
-                self.deactivate()
+                self.displayText = ''
+                self.finishEditing()
             elif self.active:
                 if event.commandDown:
-                    self.text = ''
+                    self.displayText = ''
                 elif event.optionDown:
                     # remove last space-separated entity
-                    self.text = ' '.join(self.text.split(' ')[:-1])
+                    # TODO: maybe use rfind?
+                    self.displayText = ' '.join(self.displayText.split(' ')[:-1])
                 else:
-                    self.text = self.text[:-1]
+                    self.displayText = self.displayText[:-1]
 
         if not self.active:
             # we're just selected -- don't update contents
@@ -119,24 +136,24 @@ class TextField(UIElement):
 
         # key listeners for text entry (only if active)
         if event.key == 'Space':
-            self.text += ' '
+            self.displayText += ' '
         elif event.key in (string.ascii_letters + string.punctuation
                            + string.digits):
-            self.text += event.key
+            self.displayText += event.key
         self._clipTextForEditing(True)
 
     def setText(self, text):
-        self.text = text
+        self.displayText = text
         self._clipTextForEditing(self.active)
 
     def _clipTextForEditing(self, editing):
-        if len(self.text) > self.visibleChars:
+        if len(self.displayText) > self.visibleChars:
             if editing:
-                    visibleText = '…' + self.text[-self.visibleChars:]
+                visibleText = '…' + self.displayText[-self.visibleChars:]
             else:
-                visibleText = self.text[:self.visibleChars] + '…'
+                visibleText = self.displayText[:self.visibleChars] + '…'
         else:
-            visibleText = self.text
+            visibleText = self.displayText
         self.getChild('input').props['text'] = visibleText
 
     def getHeight(self):
