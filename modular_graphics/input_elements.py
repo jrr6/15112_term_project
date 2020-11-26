@@ -17,8 +17,7 @@ class TextField(UIElement):
         self.selected = False
         self.height = props.get('height', 25)
         self.width = props.get('width', 100)
-        self.displayText = props.get('text', '')
-        self.sourceText = props.get('text', '')
+        self.text = props.get('text', '')
         self.paddingX = 10
         self.paddingY = 5
         # TODO: Actually compute visibleChars using width/font?
@@ -44,7 +43,7 @@ class TextField(UIElement):
         self.appendChild(Text('placeholder', 10, 5, text=placeholder,
                               fill='gray', anchor='nw'))
         self.appendChild(Text('input', textX, textY,
-                              text=self.displayText[-self.visibleChars:],
+                              text=self.text[-self.visibleChars:],
                               anchor=textAnchor))
 
     def onClick(self, event):
@@ -93,6 +92,8 @@ class TextField(UIElement):
         self.active = False
         self.getChild('border').props['fill'] = None
         self._clipTextForEditing(False)
+        if 'onDeactivate' in self.props:
+            self.props['onDeactivate'](self)
 
     # saves the current cell text (via the parent's method), then deactivates
     def finishEditing(self):
@@ -118,17 +119,17 @@ class TextField(UIElement):
             if (self.selected and not self.active
                     and self.props.get('editable', True)):
                 # Clear the cell and call appropriate listeners
-                self.displayText = ''
+                self.text = ''
                 self.finishEditing()
             elif self.active:
                 if event.commandDown:
-                    self.displayText = ''
+                    self.text = ''
                 elif event.optionDown:
                     # remove last space-separated entity
                     # TODO: maybe use rfind?
-                    self.displayText = ' '.join(self.displayText.split(' ')[:-1])
+                    self.text = ' '.join(self.text.split(' ')[:-1])
                 else:
-                    self.displayText = self.displayText[:-1]
+                    self.text = self.text[:-1]
 
         if not self.active:
             # we're just selected -- don't update contents
@@ -136,24 +137,24 @@ class TextField(UIElement):
 
         # key listeners for text entry (only if active)
         if event.key == 'Space':
-            self.displayText += ' '
+            self.text += ' '
         elif event.key in (string.ascii_letters + string.punctuation
                            + string.digits):
-            self.displayText += event.key
+            self.text += event.key
         self._clipTextForEditing(True)
 
     def setText(self, text):
-        self.displayText = text
+        self.text = str(text)
         self._clipTextForEditing(self.active)
 
     def _clipTextForEditing(self, editing):
-        if len(self.displayText) > self.visibleChars:
+        if len(self.text) > self.visibleChars:
             if editing:
-                visibleText = '…' + self.displayText[-self.visibleChars:]
+                visibleText = '…' + self.text[-self.visibleChars:]
             else:
-                visibleText = self.displayText[:self.visibleChars] + '…'
+                visibleText = self.text[:self.visibleChars] + '…'
         else:
-            visibleText = self.displayText
+            visibleText = self.text
         self.getChild('input').props['text'] = visibleText
 
     def getHeight(self):

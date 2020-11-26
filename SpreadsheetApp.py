@@ -58,15 +58,14 @@ class SpreadsheetGrid(UIElement):
                 cellCol = colNum + self.curLeftCol
 
                 existingText = str(Cell.getValue(cellRow, cellCol))
-                # TODO: Ensure that text field properly truncates when scrolling
-                #       (may want to move truncation logic to TextField)
                 self.appendChild(TextField(f'{rowNum},{colNum}', x, y,
                                            placeholder='', width=self.colWidth,
                                            height=self.rowHeight,
                                            text=existingText,
                                            onChange=self.saveCell,
                                            onActivate=self.setActiveCell,
-                                           onSelect=self.setSelectedCells))
+                                           onSelect=self.setSelectedCells,
+                                           onDeactivate=self.handleDeactivation))
 
         previewY = (1 + self.numRows) * self.rowHeight
         self.appendChild(TextField('preview', 0, previewY,  placeholder='',
@@ -79,16 +78,15 @@ class SpreadsheetGrid(UIElement):
     # NOTE: this might be called by a selected-but-not-active cell,
     #       so ALWAYS use sender instead of (possibly-None) self.activeCell
     def saveCell(self, sender):
-        print(Cell._cells.keys())
         row, col = map(lambda x: int(x), sender.name.split(','))
         row += self.curTopRow
         col += self.curLeftCol
-        if sender.displayText == '':
+        if sender.text == '':
             Cell.delete(row, col)
         else:
             try:
                 print(f'saving cell {sender.name}')
-                Cell.setRaw(row, col, sender.displayText)
+                Cell.setRaw(row, col, sender.text)
             except:
                 sender.setText('SYNTAX-ERROR')
                 return
@@ -98,10 +96,7 @@ class SpreadsheetGrid(UIElement):
             except:
                 sender.setText('RUNTIME-ERROR')
 
-        # at least for now, onChange and "onDeactivate" are the same thing,
-        # so this is our one-stop shop to note that the cell is no longer active
-        self.activeCell = None
-
+    # TODO: Preserve selected cell(s) on scroll
     def scroll(self, direction):
         # save current cell if we're in one
         if self.activeCell:
@@ -126,14 +121,17 @@ class SpreadsheetGrid(UIElement):
             self.activeCell.finishEditing()
         self.activeCell = sender
 
+    def handleDeactivation(self, sender):
+        # Cells may redundantly "deactivate" for safety, so only update
+        # self.activeCell if the current active cell is the one deactivating
+        if sender is self.activeCell:
+            self.activeCell = None
+
     def setSelectedCells(self, sender):
         if self.activeCell:
             self.activeCell.deactivate()
-            self.activeCell = None
         if sender.name[0] == 'H':  # whole column
             for cell in self.selectedCells:
-                # TODO: we should also finishEditing, but first we need to figure
-                #       out how the heck we're managing to save without it...
                 cell.deactivate()
                 cell.deselect()
             col = sender.name[1:]
@@ -144,7 +142,6 @@ class SpreadsheetGrid(UIElement):
                 cell.select(silent=True)
         elif sender.name[0] == 'S':  # whole row
             for cell in self.selectedCells:
-                # TODO: See above
                 cell.deactivate()
                 cell.deselect()
             row = sender.name[1:]
@@ -156,14 +153,13 @@ class SpreadsheetGrid(UIElement):
         else:  # individual cell
             for cell in self.selectedCells:
                 if cell is not sender:  # clicking cell twice doesn't deselect
-                    # TODO: See above
                     cell.deactivate()
                     cell.deselect()
             self.selectedCells = [sender]
 
         if len(self.selectedCells) == 1:
-            selectedRow, selectedCol = SpreadsheetGrid.rowColFromCellName(
-                self.selectedCells[0].name)
+            selectedRow, selectedCol = list(map(lambda x: int(x),
+                SpreadsheetGrid.rowColFromCellName(self.selectedCells[0].name)))
             self.getChild('preview').setText(Cell.getValue(selectedRow,
                                                            selectedCol))
 

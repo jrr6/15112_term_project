@@ -10,7 +10,6 @@ class Cell(object):
         self.raw = ''
         self.formula = None
 
-    # FIXME: We shouldn't be creating a cell for every visible grid spot!
     _cells = {}
 
     @staticmethod

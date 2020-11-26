@@ -3,6 +3,7 @@
 #
 # A framework atop 112 graphics that allows for modular UI elements with
 # independent states and event-driven design patterns.
+import copy
 
 from cmu_112_graphics import App as CMUApp, WrappedCanvas
 from abc import ABC, abstractmethod
@@ -132,7 +133,9 @@ class App(CMUApp, UIElement):
 
     def keyPressed(self, event):
         App._addEventMetadata(event)
-        for listener in App.keyListeners:
+        # Elements might resign key listener status when this is triggered,
+        # so make a copy so we don't skip anyone
+        for listener in copy.copy(App.keyListeners):
             listener.onKeypress(event)
 
     def redrawAll(self, canvas):
