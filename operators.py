@@ -4,6 +4,8 @@
 # Operator class and definitions.
 
 # defines an abstract operator on arbitrarily many (numerical) operands
+import math
+
 class Operator(object):
     _operators = {}
 
@@ -51,4 +53,7 @@ def mode(operands):
 
 Operator('ADD', sum)
 Operator('AVERAGE', lambda x: sum(x) / len(x))
-Operator('LITERAL', lambda x: x[0])
+Operator('DIVIDE', lambda x: x[0] / math.prod(x[1:]))
+Operator('MODE', mode)
+Operator('MULTIPLY', lambda x: math.prod)
+Operator('SUBTRACT', lambda x: x[0] - sum(x[1:]))
