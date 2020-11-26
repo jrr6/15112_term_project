@@ -3,16 +3,35 @@
 #
 # Main code file -- contains UI & logic code for spreadsheet app
 
-import string
 from enum import Enum
 
 from modular_graphics import UIElement, App
+from modular_graphics.input_elements import TextField
+from WebImportModal import Modal
 
 class Direction(Enum):
     RIGHT = (0, 1)
     LEFT = (0, -1)
     UP = (-1, 0)
     DOWN = (1, 0)
+
+class Cell(object):
+    def __init__(self, rawText):
+        self.raw = rawText
+        self.formula = None
+        self.value = ''
+        self.evaluate()
+
+    def evaluate(self):
+        if self.raw[0] != '=':
+            self.formula = None
+            try:
+                self.value = int(self.raw)
+            except ValueError:
+                self.value = self.raw
+        else:
+            # self.formula = Formula(self.raw)
+            pass
 
 class SpreadsheetGrid(UIElement):
     def __init__(self, name, x, y, **props):
@@ -54,10 +73,7 @@ class SpreadsheetGrid(UIElement):
                 cellRow = rowNum + self.curTopRow
                 cellCol = colNum + self.curLeftCol
 
-                # TODO: It may be more efficient to index rows numerically
-                #       via row * maxElsPerRow + col (that way we don't suffer
-                #       the overhead of dealing with strings)
-                existingText = self.cells.get(f'{cellRow},{cellCol}', '')
+                existingText = self.cells.get((cellRow, cellCol), '')
                 # TODO: Ensure that text field properly truncates when scrolling
                 #       (may want to move truncation logic to TextField)
                 self.appendChild(TextField(f'{rowNum},{colNum}', x, y,
@@ -79,13 +95,18 @@ class SpreadsheetGrid(UIElement):
         row, col = map(lambda x: int(x), sender.name.split(','))
         row += self.curTopRow
         col += self.curLeftCol
-        cellLabel = f'{row},{col}'
-        if sender.text == '' and cellLabel in self.cells:
-            del self.cells[cellLabel]
+        cellLoc = (row, col)
+        if sender.text == '':
+            if cellLoc in self.cells:
+                del self.cells[cellLoc]
         else:
-            self.cells[cellLabel] = sender.text
+            self.cells[cellLoc] = sender.text
+            if sender.text[0] == '=':
+                # TODO: It's a formula
+                pass
 
-        # at least for now, onChange and "onDeactivate" are the same thing
+        # at least for now, onChange and "onDeactivate" are the same thing,
+        # so this is our one-stop shop to note that the cell is no longer active
         self.activeCell = None
 
     def scroll(self, direction):
@@ -97,6 +118,8 @@ class SpreadsheetGrid(UIElement):
         self.curTopRow += drow
         self.curLeftCol += dcol
         self.removeAllChildren()
+        # TODO: Is recreating everything every time going to become too costly?
+        #       If so, could try to change (x, y) of existing cells.
         self.initChildren()
 
     def getWidth(self):
@@ -123,137 +146,17 @@ class SpreadsheetGrid(UIElement):
             self.scroll(Direction.UP)
         elif event.key == 'Down':
             self.scroll(Direction.DOWN)
-
-class TextField(UIElement):
-    def __init__(self, name, x, y, **props):
-        super().__init__(name, x, y, props)
-        self.active = False
-        self.height = props.get('height', 25)
-        self.width = props.get('width', 100)
-        self.text = props.get('text', '')
-        self.paddingX = 10
-        self.paddingY = 5
-
-    # TODO: Is recreating everything every time going to become too costly?
-    #       If so, could try to change (x, y) of existing cells.
-    def initChildren(self):
-        placeholder = self.props.get('placeholder', 'Enter text')
-        fill = self.props.get('fill', None)
-        textAlign = self.props.get('align', None)
-        if textAlign == 'center':
-            textX = self.width // 2
-            textY = self.height // 2
-            textAnchor = 'center'
-        else:  # align left
-            textX = self.paddingX
-            textY = self.paddingY
-            textAnchor = 'nw'
-
-        self.appendChild(Rectangle('border', 0, 0, width=self.width,
-                                   height=self.height, fill=fill))
-        self.appendChild(Text('placeholder', 10, 5, text=placeholder,
-                              fill='gray', anchor='nw'))
-        self.appendChild(Text('input', textX, textY, text=self.text,
-                              anchor=textAnchor))
-
-    def onClick(self, x, y):
-        if self.active:
-            self.deactivate()
-        elif self.props.get('editable', True):
-            self.activate()
-
-    def activate(self):
-        self.removeChild('placeholder')
-        self.getChild('border').props['fill'] = 'lightblue'
-        self.makeKeyListener()
-        self.active = True
-        if 'onActivate' in self.props:
-            self.props['onActivate'](self)
-
-    def deactivate(self):
-        self.active = False
-        self.getChild('border').props['fill'] = None
-        self.resignKeyListener()
-        if 'onChange' in self.props:
-            self.props['onChange'](self)
-
-    def onKeypress(self, event):
-        if event.key == 'Enter' or event.key == 'Escape':
-            self.deactivate()
-            return
-
-        if event.key == 'Space':
-            self.text += ' '
-        elif event.key == 'Delete':
-            self.text = self.text[:-1]
-        elif event.key in (string.ascii_letters + string.punctuation
-                           + string.digits):
-            self.text += event.key
-
-        charsToShow = 12
-        self.getChild('input').props['text'] = self.text[-charsToShow:]
-
-    def getHeight(self):
-        return self.height
-
-    def getWidth(self):
-        return self.width
-
-class Button(UIElement):
-    def __init__(self, name, x, y, **props):
-        super().__init__(name, x, y, props)
-        self.width = props.get('width', 200)
-        self.height = props.get('height', 100)
-
-    def initChildren(self):
-        self.appendChild(Rectangle('border', 0, 0,
-                                   width=self.width, height=self.height))
-        if 'text' in self.props:
-            self.appendChild(Text('label', self.width // 2, self.height // 2,
-                                  text=self.props['text']))
-
-    def onClick(self, x, y):
-        if 'action' in self.props:
-            self.props['action'](self)
-
-    def getHeight(self):
-        return self.height
-
-    def getWidth(self):
-        return self.width
-
-class Rectangle(UIElement):
-    def __init__(self, name, x, y, **props):
-        super().__init__(name, x, y, props)
-        self.width = props.get('width', 0)
-        self.height = props.get('height', 0)
-
-    def draw(self, canvas):
-        fill = self.props.get('fill', None)
-        canvas.createRectangle(0, 0, self.width, self.height, fill=fill)
-
-    def getWidth(self):
-        return self.width
-
-    def getHeight(self):
-        return self.height
-
-
-class Text(UIElement):
-    def __init__(self, name, x, y, **props):
-        super().__init__(name, x, y, props)
-
-    def draw(self, canvas):
-        canvas.createText(0, 0, text=self.props.get('text', ''),
-                          font=self.props.get('font', 'Courier 12'),
-                          anchor=self.props.get('anchor', 'center'))
-
-    # user never directly interacts with text, so don't bother computing bounds
-    def getHeight(self):
-        return 0
-
-    def getWidth(self):
-        return 0
+        # testing modals
+        elif event.key == 'r':
+            # modalWidth, modalHeight = 500, 300
+            # modalX = self.getWidth() // 2 - modalWidth // 2
+            # modalY = self.getHeight() // 2 - modalHeight // 2
+            # self.appendChild(Modal('demo',
+            #                        modalX, modalY,  width=modalWidth,
+            #                        height=modalHeight,
+            #                        message='Enter your favorite color:',
+            #                        input=True))
+            pass
 
 class Scene(UIElement):
     def __init__(self):
