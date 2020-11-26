@@ -54,12 +54,23 @@ class Cell(object):
         rep += ')'
         return rep
 
+# Represents a formula reference to a cell. We use refs instead of pointing
+# to cells directly so that we don't end up with zombies (and unexpected
+# behavior) if a previously-referenced cell is subsequently cleared/deleted
+class CellRef(object):
+    def __init__(self, row, col):
+        self.row = row
+        self.col = col
+
+    def getValue(self):
+        return Cell.getValue(self.row, self.col)
+
 # represents a formula in a cell, where a formula is composed of an operator
 # applied to multiple operands, each of which could be another formula,
 # a cell reference, or a numerical literal
 class Formula(object):
     def __init__(self, operator: Operator,
-                 operands: list[Union[int, str, Cell]]):
+                 operands: list[Union[int, str, CellRef]]):
         self.operator = operator
         self.operands = operands
 
@@ -122,7 +133,7 @@ class Formula(object):
         try:
             cellRow = int(text[1:]) - 1  # User-facing numbering is 1-based
             cellCol = ord(text[0]) - ord('A')
-            return [Cell.get(cellRow, cellCol)]
+            return [CellRef(cellRow, cellCol)]
         except:
             # TODO: types
             return [int(text)]
@@ -132,8 +143,8 @@ class Formula(object):
         for operand in self.operands:
             if isinstance(operand, Formula):
                 evaluatedOperands.append(operand.evaluate())
-            elif isinstance(operand, Cell):
-                evaluatedOperands.append(operand.value())
+            elif isinstance(operand, CellRef):
+                evaluatedOperands.append(operand.getValue())
             else:
                 # TODO: for now, we just assume it's an appropriate data type
                 evaluatedOperands.append(int(operand))

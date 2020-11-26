@@ -87,7 +87,8 @@ class SpreadsheetGrid(UIElement):
             try:
                 print(f'saving cell {sender.name}')
                 Cell.setRaw(row, col, sender.text)
-            except:
+            except Exception as exc:
+                print(exc)
                 sender.setText('SYNTAX-ERROR')
                 return
 
@@ -129,7 +130,7 @@ class SpreadsheetGrid(UIElement):
 
     def setSelectedCells(self, sender):
         if self.activeCell:
-            self.activeCell.deactivate()
+            self.activeCell.finishEditing()
         if sender.name[0] == 'H':  # whole column
             for cell in self.selectedCells:
                 cell.deactivate()

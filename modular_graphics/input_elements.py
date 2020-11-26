@@ -13,17 +13,20 @@ from modular_graphics import UIElement
 class TextField(UIElement):
     def __init__(self, name, x, y, **props):
         super().__init__(name, x, y, props)
+        # Constants
+        self.paddingX = 10
+        self.paddingY = 5
+        self.doubleClickStart = 0
+        self.kDoubleClickDelay = 0.75  # ms
+
+        # State
         self.active = False
         self.selected = False
         self.height = props.get('height', 25)
         self.width = props.get('width', 100)
-        self.text = props.get('text', '')
-        self.paddingX = 10
-        self.paddingY = 5
         # TODO: Actually compute visibleChars using width/font?
         self.visibleChars = props.get('visibleChars', 13)
-        self.doubleClickStart = 0
-        self.kDoubleClickDelay = 0.75  # ms
+        self.text = props.get('text', '')
 
     def initChildren(self):
         placeholder = self.props.get('placeholder', 'Enter text')
@@ -43,8 +46,9 @@ class TextField(UIElement):
         self.appendChild(Text('placeholder', 10, 5, text=placeholder,
                               fill='gray', anchor='nw'))
         self.appendChild(Text('input', textX, textY,
-                              text=self.text[-self.visibleChars:],
-                              anchor=textAnchor))
+                              text='', anchor=textAnchor))
+        # populate input with correct clipping
+        self._clipTextForEditing(False)
 
     def onClick(self, event):
         now = time.time()
