@@ -5,7 +5,6 @@
 import string
 import time
 
-from formulas import Cell
 from modular_graphics.atomic_elements import Rectangle, Text
 from modular_graphics import UIElement
 
@@ -27,6 +26,7 @@ class TextField(UIElement):
         # TODO: Actually compute visibleChars using width/font?
         self.visibleChars = props.get('visibleChars', 13)
         self.text = props.get('text', '')
+        self.formulaOutput = props.get('output', None)
 
     def initChildren(self):
         placeholder = self.props.get('placeholder', 'Enter text')
@@ -48,7 +48,7 @@ class TextField(UIElement):
         self.appendChild(Text('input', textX, textY,
                               text='', anchor=textAnchor))
         # populate input with correct clipping
-        self._clipTextForEditing(False)
+        self._renderText(False)
 
     def onClick(self, event):
         now = time.time()
@@ -77,7 +77,7 @@ class TextField(UIElement):
         self.removeChild('placeholder')
         self.getChild('border').props['fill'] = 'lightblue'
         self.makeKeyListener()
-        self._clipTextForEditing(True)
+        self._renderText(True)
         self.active = True
         if 'onActivate' in self.props:
             self.props['onActivate'](self)
@@ -95,7 +95,7 @@ class TextField(UIElement):
     def deactivate(self):
         self.active = False
         self.getChild('border').props['fill'] = None
-        self._clipTextForEditing(False)
+        self._renderText(False)
         if 'onDeactivate' in self.props:
             self.props['onDeactivate'](self)
 
@@ -145,20 +145,31 @@ class TextField(UIElement):
         elif event.key in (string.ascii_letters + string.punctuation
                            + string.digits):
             self.text += event.key
-        self._clipTextForEditing(True)
+        self._renderText(True)
 
+    # Sets the text the text field holds
     def setText(self, text):
+        print(f'setting text of {self.name} to', text)
         self.text = str(text)
-        self._clipTextForEditing(self.active)
+        self._renderText(self.active)
 
-    def _clipTextForEditing(self, editing):
-        if len(self.text) > self.visibleChars:
-            if editing:
-                visibleText = '…' + self.text[-self.visibleChars:]
-            else:
-                visibleText = self.text[:self.visibleChars] + '…'
+    # Sets the output text for a text field containing a formula
+    def setOutputText(self, formulaOutput):
+        self.formulaOutput = formulaOutput
+
+    def _renderText(self, editing):
+        if not editing and self.formulaOutput:
+            text = self.formulaOutput
         else:
-            visibleText = self.text
+            text = self.text
+
+        if len(text) > self.visibleChars:
+            if editing:
+                visibleText = '…' + text[-self.visibleChars:]
+            else:
+                visibleText = text[:self.visibleChars] + '…'
+        else:
+            visibleText = text
         self.getChild('input').props['text'] = visibleText
 
     def getHeight(self):
@@ -166,6 +177,7 @@ class TextField(UIElement):
 
     def getWidth(self):
         return self.width
+
 
 class Button(UIElement):
     def __init__(self, name, x, y, **props):

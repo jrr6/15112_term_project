@@ -57,20 +57,25 @@ class SpreadsheetGrid(UIElement):
                 cellRow = rowNum + self.curTopRow
                 cellCol = colNum + self.curLeftCol
 
-                existingText = str(Cell.getValue(cellRow, cellCol))
-                self.appendChild(TextField(f'{rowNum},{colNum}', x, y,
-                                           placeholder='', width=self.colWidth,
-                                           height=self.rowHeight,
-                                           text=existingText,
-                                           onChange=self.saveCell,
-                                           onActivate=self.setActiveCell,
-                                           onSelect=self.setSelectedCells,
-                                           onDeactivate=self.handleDeactivation))
+                existingText = Cell.getRaw(cellRow, cellCol)
+                existingOutput = (str(Cell.getValue(cellRow, cellCol))
+                                  if Cell.hasFormula(cellRow, cellCol)
+                                  else None)
+                tf = TextField(f'{rowNum},{colNum}', x, y,
+                               placeholder='', width=self.colWidth,
+                               height=self.rowHeight,
+                               text=existingText,
+                               output=existingOutput,
+                               onChange=self.saveCell,
+                               onActivate=self.setActiveCell,
+                               onSelect=self.setSelectedCells,
+                               onDeactivate=self.handleDeactivation)
+                self.appendChild(tf)
 
         previewY = (1 + self.numRows) * self.rowHeight
         self.appendChild(TextField('preview', 0, previewY,  placeholder='',
                                    width=self.getWidth(), height=self.rowHeight,
-                                   editable=False))
+                                   editable=False, visibleChars=115))
 
         self.makeKeyListener()
 
@@ -87,15 +92,15 @@ class SpreadsheetGrid(UIElement):
             try:
                 print(f'saving cell {sender.name}')
                 Cell.setRaw(row, col, sender.text)
-            except Exception as exc:
-                print(exc)
-                sender.setText('SYNTAX-ERROR')
-                return
+            except:
+                sender.setOutputText('SYNTAX-ERROR')
+                return  # if we've already got a syntax error, don't try to eval
 
             try:
-                sender.setText(str(Cell.getValue(row, col)))
+                sender.setOutputText(str(Cell.getValue(row, col)))
             except:
-                sender.setText('RUNTIME-ERROR')
+                sender.setOutputText('RUNTIME-ERROR')
+        self.updatePreview()
 
     # TODO: Preserve selected cell(s) on scroll
     def scroll(self, direction):
@@ -157,12 +162,19 @@ class SpreadsheetGrid(UIElement):
                     cell.deactivate()
                     cell.deselect()
             self.selectedCells = [sender]
+        self.updatePreview()
 
+    def updatePreview(self):
         if len(self.selectedCells) == 1:
             selectedRow, selectedCol = list(map(lambda x: int(x),
                 SpreadsheetGrid.rowColFromCellName(self.selectedCells[0].name)))
-            self.getChild('preview').setText(Cell.getValue(selectedRow,
-                                                           selectedCol))
+            selectedRow += self.curTopRow
+            selectedCol += self.curLeftCol
+            self.getChild('preview').setText(Cell.getRaw(selectedRow,
+                                                         selectedCol))
+        else:
+            # TODO: Show some useful stats or something...
+            pass
 
     def onKeypress(self, event):
         if event.optionDown:

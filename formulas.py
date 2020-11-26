@@ -20,6 +20,18 @@ class Cell(object):
             return ''
 
     @staticmethod
+    def getRaw(row, col):
+        if (row, col) in Cell._cells:
+            return Cell._cells[row, col].raw
+        else:
+            return ''
+
+    @staticmethod
+    def hasFormula(row, col):
+        if (row, col) in Cell._cells:
+            return Cell._cells[row, col].formula is not None
+
+    @staticmethod
     def delete(row, col):
         if (row, col) in Cell._cells:
             del Cell._cells[row, col]

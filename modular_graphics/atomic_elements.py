@@ -31,7 +31,7 @@ class Text(UIElement):
 
     def draw(self, canvas):
         canvas.createText(0, 0, text=self.props.get('text', ''),
-                          font=self.props.get('font', 'Courier 12'),
+                          font=self.props.get('font', '"Andale Mono" 12'),
                           anchor=self.props.get('anchor', 'center'))
 
     # user never directly interacts with text, so don't bother computing bounds
