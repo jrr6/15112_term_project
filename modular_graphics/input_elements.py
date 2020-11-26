@@ -3,6 +3,7 @@
 #
 # Contains UI elements for user interaction.
 import string
+import time
 
 from modular_graphics.atomic_elements import Rectangle, Text
 from modular_graphics import UIElement
@@ -12,12 +13,15 @@ class TextField(UIElement):
     def __init__(self, name, x, y, **props):
         super().__init__(name, x, y, props)
         self.active = False
+        self.selected = False
         self.height = props.get('height', 25)
         self.width = props.get('width', 100)
         self.text = props.get('text', '')
         self.paddingX = 10
         self.paddingY = 5
-        self.visibleChars = 12  # TODO: Actually compute this using width/font?
+        self.visibleChars = 13  # TODO: Actually compute this using width/font?
+        self.doubleClickStart = 0
+        self.kDoubleClickDelay = 0.75  # ms
 
     def initChildren(self):
         placeholder = self.props.get('placeholder', 'Enter text')
@@ -40,50 +44,100 @@ class TextField(UIElement):
                               text=self.text[-self.visibleChars:],
                               anchor=textAnchor))
 
-    def onClick(self, x, y):
-        if self.active:
-            self.deactivate()
-        elif self.props.get('editable', True):
+    def onClick(self, event):
+        now = time.time()
+        if (self.props.get('editable', True)
+                and not self.active
+                and now < self.doubleClickStart + self.kDoubleClickDelay):
             self.activate()
+        else:
+            self.select()
+            self.doubleClickStart = now
+
+    def select(self, silent=False):
+        # uneditable cells can be selected (can't be edited), but don't auto-
+        # update UI (button-esque)
+        self.selected = True
+        self.makeKeyListener()
+        if self.props.get('editable', True):
+            self.getChild('border').props['borderColor'] = 'blue'
+            self.getChild('border').props['borderWidth'] = 2
+        if 'onSelect' in self.props and not silent:
+            self.props['onSelect'](self)
 
     def activate(self):
         self.removeChild('placeholder')
         self.getChild('border').props['fill'] = 'lightblue'
         self.makeKeyListener()
-        self.clipTextForEditing(True)
+        self._clipTextForEditing(True)
         self.active = True
         if 'onActivate' in self.props:
             self.props['onActivate'](self)
 
     def deactivate(self):
+        # deselect
+        self.selected = False
+        self.resignKeyListener()
+        self.getChild('border').props['borderColor'] = 'black'
+        self.getChild('border').props['borderWidth'] = 1
+
+        # deactivate
         self.active = False
         self.getChild('border').props['fill'] = None
-        self.resignKeyListener()
-        self.clipTextForEditing(False)
+        self._clipTextForEditing(False)
         if 'onChange' in self.props:
             self.props['onChange'](self)
 
     def onKeypress(self, event):
-        if event.key == 'Enter' or event.key == 'Escape':
-            self.deactivate()
+        # key listeners that apply if selected OR active
+        if event.key == 'Enter':
+            if self.active:
+                self.deactivate()
+            elif self.selected and self.props.get('editable', True):
+                self.activate()
+        elif event.key == 'Escape':
+            self.deactivate()  # also deselects
+            return
+        elif event.key == 'Delete':
+            if (self.selected and not self.active
+                    and self.props.get('editable', True)):
+                # Clear the cell and call appropriate listeners
+                self.text = ''
+                self.deactivate()
+            elif self.active:
+                if event.commandDown:
+                    self.text = ''
+                elif event.optionDown:
+                    # remove last space-separated entity
+                    self.text = ' '.join(self.text.split(' ')[:-1])
+                else:
+                    self.text = self.text[:-1]
+
+        if not self.active:
+            # we're just selected -- don't update contents
             return
 
+        # key listeners for text entry (only if active)
         if event.key == 'Space':
             self.text += ' '
-        elif event.key == 'Delete':
-            self.text = self.text[:-1]
         elif event.key in (string.ascii_letters + string.punctuation
                            + string.digits):
             self.text += event.key
-        self.clipTextForEditing(True)
+        self._clipTextForEditing(True)
 
-    def clipTextForEditing(self, editing):
-        if editing:
-            visibleText = self.text[-self.visibleChars:]
+    def setText(self, text):
+        self.text = text
+        self._clipTextForEditing(self.active)
+
+    def _clipTextForEditing(self, editing):
+        if len(self.text) > self.visibleChars:
+            if editing:
+                    visibleText = '…' + self.text[-self.visibleChars:]
+            else:
+                visibleText = self.text[:self.visibleChars] + '…'
         else:
-            visibleText = self.text[:self.visibleChars]
+            visibleText = self.text
         self.getChild('input').props['text'] = visibleText
-
 
     def getHeight(self):
         return self.height
@@ -104,7 +158,7 @@ class Button(UIElement):
             self.appendChild(Text('label', self.width // 2, self.height // 2,
                                   text=self.props['text']))
 
-    def onClick(self, x, y):
+    def onClick(self, event):
         if 'action' in self.props:
             self.props['action'](self)
 

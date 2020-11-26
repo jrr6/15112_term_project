@@ -13,7 +13,10 @@ class Rectangle(UIElement):
 
     def draw(self, canvas):
         fill = self.props.get('fill', None)
-        canvas.createRectangle(0, 0, self.width, self.height, fill=fill)
+        borderColor = self.props.get('borderColor', 'black')
+        borderWidth = self.props.get('borderWidth', 1)
+        canvas.createRectangle(0, 0, self.width, self.height, fill=fill,
+                               outline=borderColor, width=borderWidth)
 
     def getWidth(self):
         return self.width

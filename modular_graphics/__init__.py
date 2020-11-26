@@ -69,7 +69,7 @@ class UIElement(ABC):
     def removeAllChildren(self):
         self.children = []
 
-    def onClick(self, x, y):
+    def onClick(self, event):
         pass
 
     def onKeypress(self, event):
@@ -108,20 +108,30 @@ class App(CMUApp, UIElement):
         App.instance.run()
 
     def mousePressed(self, event):
+        App._addEventMetadata(event)
         childIdx = len(self.children) - 1
         while childIdx >= 0:
             curChild = self.children[childIdx]
-            self.processMouseEvent(curChild, event.x, event.y)
+            self.processMouseEvent(curChild, event)
             childIdx -= 1
 
-    def processMouseEvent(self, element: UIElement, eventX, eventY):
-        if (element.x <= eventX <= element.x + element.getWidth()
-                and element.y <= eventY <= element.y + element.getHeight()):
-            element.onClick(eventX, eventY)
+    def processMouseEvent(self, element: UIElement, event):
+        if (element.x <= event.x <= element.x + element.getWidth()
+                and element.y <= event.y <= element.y + element.getHeight()):
+            # This would be easier with copy.(deep)copy, but we get pickling
+            # errors
+            oldX = event.x
+            oldY = event.y
+            event.x -= element.x
+            event.y -= element.y
+            element.onClick(event)
+            event.x = oldX
+            event.y = oldY
         for child in element.children:
-            self.processMouseEvent(child, eventX, eventY)
+            self.processMouseEvent(child, event)
 
     def keyPressed(self, event):
+        App._addEventMetadata(event)
         for listener in App.keyListeners:
             listener.onKeypress(event)
 
@@ -133,3 +143,10 @@ class App(CMUApp, UIElement):
 
     def getHeight(self):
         return self.height
+
+    @staticmethod
+    def _addEventMetadata(event):
+        # Add checks for modifier keys
+        event.controlDown = (event.state & 0x4 != 0)
+        event.commandDown = (event.state & 0x8 != 0)
+        event.optionDown = (event.state & 0x10 != 0)

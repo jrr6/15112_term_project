@@ -5,6 +5,8 @@
 
 # defines an abstract operator on arbitrarily many (numerical) operands
 import math
+import random
+
 
 class Operator(object):
     _operators = {}
@@ -55,6 +57,7 @@ Operator('ADD', sum)
 Operator('AVERAGE', lambda x: sum(x) / len(x))
 Operator('DIVIDE', lambda x: x[0] / math.prod(x[1:]))
 Operator('MODE', mode)
-Operator('MULTIPLY', lambda x: math.prod)
+Operator('MULTIPLY', math.prod)
+# Operator('RAND', lambda x: random.random())  # TODO: Figure out how to stop this recomputing when scrolling!
 Operator('SUBTRACT', lambda x: x[0] - sum(x[1:]))
 Operator('SUM', sum)

@@ -22,11 +22,12 @@ class SpreadsheetGrid(UIElement):
         self.numRows = 20
         self.numCols = 7
         self.rowHeight = 25
-        self.colWidth = 100
+        self.colWidth = 115
         self.siderWidth = 25
         self.curTopRow = 0
         self.curLeftCol = 0
         self.activeCell = None
+        self.selectedCells = []
 
     def initChildren(self):
         for headerNum in range(self.numCols):
@@ -36,16 +37,18 @@ class SpreadsheetGrid(UIElement):
                                        placeholder='', editable=False,
                                        text=label, width=self.colWidth,
                                        height=self.rowHeight, fill='lightgray',
-                                       align='center'))
+                                       align='center',
+                                       onSelect=self.setSelectedCells))
 
         for siderNum in range(self.numRows):
             y = (1 + siderNum) * self.rowHeight  # don't label headers
             label = siderNum + self.curTopRow + 1
-            self.appendChild(TextField(f'H{headerNum}', 0, y,
+            self.appendChild(TextField(f'S{siderNum}', 0, y,
                                        placeholder='', editable=False,
                                        text=str(label),
                                        width=self.siderWidth, fill='lightgray',
-                                       height=self.rowHeight, align='center'))
+                                       height=self.rowHeight, align='center',
+                                       onSelect=self.setSelectedCells))
 
         for rowNum in range(self.numRows):
             for colNum in range(self.numCols):
@@ -63,7 +66,8 @@ class SpreadsheetGrid(UIElement):
                                            height=self.rowHeight,
                                            text=existingText,
                                            onChange=self.saveCell,
-                                           onActivate=self.setActiveCell))
+                                           onActivate=self.setActiveCell,
+                                           onSelect=self.setSelectedCells))
 
         # TODO: Add "preview" at the bottom
         # self.appendChild(TextField('preview', placeholder='',
@@ -73,6 +77,8 @@ class SpreadsheetGrid(UIElement):
         self.makeKeyListener()
 
     # called by text field after new value entered
+    # NOTE: this might be called by a selected-but-not-active cell,
+    #       so ALWAYS use sender instead of (possibly-None) self.activeCell
     def saveCell(self, sender):
         row, col = map(lambda x: int(x), sender.name.split(','))
         row += self.curTopRow
@@ -83,8 +89,13 @@ class SpreadsheetGrid(UIElement):
             try:
                 Cell.get(row, col).setRaw(sender.text)
             except:
-                # TODO: Give user feedback
-                print('SYNTAX ERROR')
+                sender.setText('SYNTAX-ERROR')
+                return
+
+            try:
+                sender.setText(str(Cell.get(row, col).value()))
+            except:
+                sender.setText('RUNTIME-ERROR')
 
         # at least for now, onChange and "onDeactivate" are the same thing,
         # so this is our one-stop shop to note that the cell is no longer active
@@ -114,7 +125,31 @@ class SpreadsheetGrid(UIElement):
             self.activeCell.deactivate()
         self.activeCell = sender
 
-    def onClick(self, x, y):
+    def setSelectedCells(self, sender):
+        print(sender.name)
+        if sender.name[0] == 'H':  # whole column
+            for cell in self.selectedCells:
+                cell.deactivate()
+            col = sender.name[1:]
+            self.selectedCells = [cell for cell in self.children
+                                  if cell.name[cell.name.find(',') + 1:] == col]
+            for cell in self.selectedCells:
+                cell.select(True)
+        elif sender.name[0] == 'S':  # whole row
+            for cell in self.selectedCells:
+                cell.deactivate()
+            row = sender.name[1:]
+            self.selectedCells = [cell for cell in self.children
+                                  if cell.name[:cell.name.find(',')] == row]
+            for cell in self.selectedCells:
+                cell.select(True)
+        else:  # individual cell
+            for cell in self.selectedCells:
+                if cell is not sender:  # clicking cell twice doesn't deselect
+                    cell.deactivate()
+            self.selectedCells = [sender]
+
+    def onClick(self, event):
         if self.activeCell:
             self.activeCell.deactivate()
 
@@ -141,8 +176,8 @@ class SpreadsheetGrid(UIElement):
 
 class Scene(UIElement):
     def __init__(self):
-        self.width = 750
-        self.height = 550
+        self.width = 850
+        self.height = 575
         super().__init__('scene', 0, 0, {})
 
     def initChildren(self):

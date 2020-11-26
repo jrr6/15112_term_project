@@ -3,19 +3,26 @@ from modular_graphics.input_elements import TextField, Button
 from modular_graphics import UIElement
 
 class Modal(UIElement):
+    kWidth = 500
+    kInputHeight = 300
+    kNoInputHeight = 100
+
     def __init__(self, name, x, y, **props):
         super().__init__(name, x, y, props)
-        self.height = 300
-        self.width = 500
+        self.width = Modal.kWidth
         self.message = props.get('message', '')
         self.input = props.get('input', False)
+        if self.input:
+            self.height = Modal.kInputHeight
+        else:
+            self.height = Modal.kNoInputHeight
 
     def initChildren(self):
         textX, textY = self.width // 2, 30
         inputWidth = 200
         inputX, inputY = self.width // 2 - inputWidth // 2, 150
         buttonWidth = 75
-        buttonX, buttonY = self.width // 2 - buttonWidth // 2, 250
+        buttonX, buttonY = self.width // 2 - buttonWidth // 2, self.height - 50
         self.appendChild(Rectangle('modal-container', 0, 0,
                                    width=self.width, height=self.height,
                                    outline='black', fill='white'))
@@ -32,9 +39,14 @@ class Modal(UIElement):
         #       behind the modal are inadvertently triggering on click/key
 
     def submit(self, sender):
-        # TODO: Implement
-        print(f'Submitted modal with value'
-              f' {self.getChild("modal-input-field").text}')
+        print('submitted')
+        if self.input:
+            inputValue = self.getChild("modal-input-field").text
+        else:
+            inputValue = None
+
+        if 'onSubmit' in self.props:
+            self.props['onSubmit'](self, inputValue)
 
     def getHeight(self):
         return self.height
