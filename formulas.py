@@ -5,14 +5,40 @@ from typing import Union
 from data_structures import Stack
 from operators import Operator
 
-# TODO: we need to be able to represent cells in our formulae
 class Cell(object):
-    @staticmethod
-    def get(coords):
-        return Cell()
+    def __init__(self):
+        self.raw = ''
+        self.formula = None
 
+    _cells = {}
+
+    @staticmethod
+    def get(row, col):
+        if (row, col) not in Cell._cells:
+            Cell._cells[row, col] = Cell()
+        return Cell._cells[row, col]
+
+    @staticmethod
+    def delete(row, col):
+        if (row, col) in Cell._cells:
+            del Cell._cells[row, col]
+
+    # Sets raw value of cell as well as formula, if applicable
+    # NOTE: will throw if formula illegal (i.e., syntax error)
+    def setRaw(self, text):
+        self.raw = text
+        if self.raw[0] == '=':
+            self.formula = Formula.fromText(self.raw)
+
+    # Returns computed value of cell (with appropriate type/formula result)
     def value(self):
-        pass
+        if self.formula:
+            return self.formula.evaluate()
+        else:
+            try:
+                return int(self.raw)
+            except ValueError:
+                return self.raw
 
 # represents a formula in a cell, where a formula is composed of an operator
 # applied to multiple operands, each of which could be another formula,
@@ -80,9 +106,9 @@ class Formula(object):
         if text == '':
             return []
         try:
-            cellRow = int(text[1:])
+            cellRow = int(text[1:]) - 1  # User-facing numbering is 1-based
             cellCol = ord(text[0]) - ord('A')
-            return [Cell.get((cellRow, cellCol))]
+            return [Cell.get(cellRow, cellCol)]
         except:
             # TODO: types
             return [int(text)]

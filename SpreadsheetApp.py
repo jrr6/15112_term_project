@@ -5,6 +5,7 @@
 
 from enum import Enum
 
+from formulas import Cell
 from modular_graphics import UIElement, App
 from modular_graphics.input_elements import TextField
 from WebImportModal import Modal
@@ -15,24 +16,6 @@ class Direction(Enum):
     UP = (-1, 0)
     DOWN = (1, 0)
 
-class Cell(object):
-    def __init__(self, rawText):
-        self.raw = rawText
-        self.formula = None
-        self.value = ''
-        self.evaluate()
-
-    def evaluate(self):
-        if self.raw[0] != '=':
-            self.formula = None
-            try:
-                self.value = int(self.raw)
-            except ValueError:
-                self.value = self.raw
-        else:
-            # self.formula = Formula(self.raw)
-            pass
-
 class SpreadsheetGrid(UIElement):
     def __init__(self, name, x, y, **props):
         super().__init__(name, x, y, props)
@@ -41,7 +24,6 @@ class SpreadsheetGrid(UIElement):
         self.rowHeight = 25
         self.colWidth = 100
         self.siderWidth = 25
-        self.cells = {}
         self.curTopRow = 0
         self.curLeftCol = 0
         self.activeCell = None
@@ -73,7 +55,7 @@ class SpreadsheetGrid(UIElement):
                 cellRow = rowNum + self.curTopRow
                 cellCol = colNum + self.curLeftCol
 
-                existingText = self.cells.get((cellRow, cellCol), '')
+                existingText = str(Cell.get(cellRow, cellCol).value())
                 # TODO: Ensure that text field properly truncates when scrolling
                 #       (may want to move truncation logic to TextField)
                 self.appendChild(TextField(f'{rowNum},{colNum}', x, y,
@@ -95,15 +77,14 @@ class SpreadsheetGrid(UIElement):
         row, col = map(lambda x: int(x), sender.name.split(','))
         row += self.curTopRow
         col += self.curLeftCol
-        cellLoc = (row, col)
         if sender.text == '':
-            if cellLoc in self.cells:
-                del self.cells[cellLoc]
+            Cell.delete(row, col)
         else:
-            self.cells[cellLoc] = sender.text
-            if sender.text[0] == '=':
-                # TODO: It's a formula
-                pass
+            try:
+                Cell.get(row, col).setRaw(sender.text)
+            except:
+                # TODO: Give user feedback
+                print('SYNTAX ERROR')
 
         # at least for now, onChange and "onDeactivate" are the same thing,
         # so this is our one-stop shop to note that the cell is no longer active
