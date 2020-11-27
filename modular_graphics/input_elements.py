@@ -124,6 +124,7 @@ class TextField(UIElement):
                     and self.props.get('editable', True)):
                 # Clear the cell and call appropriate listeners
                 self.text = ''
+                self.formulaOutput = None
                 self.finishEditing()
             elif self.active:
                 if event.commandDown:
