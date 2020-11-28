@@ -53,6 +53,8 @@ def mode(operands):
 
 # OPERATOR DEFINITIONS
 
+Operator('LITERAL', lambda x: x[0])  # Utility operator for literal formulae
+
 Operator('ADD', sum)
 Operator('AVERAGE', lambda x: sum(x) / len(x))
 Operator('DIVIDE', lambda x: x[0] / math.prod(x[1:]))

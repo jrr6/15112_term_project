@@ -36,8 +36,8 @@ class Stack(object):
 # A bare-bones "graph" for representing formula dependency relationships
 class DependencyGraph(object):
     def __init__(self):
-        self.dependents: dict = {}
-        self.dependencies: dict = {}
+        self.dependents = {}
+        self.dependencies = {}
 
     def setDependencies(self, cellRef, dependencies: set):
         if cellRef not in self.dependencies:
@@ -50,6 +50,7 @@ class DependencyGraph(object):
         # If there were any old dependencies the cell no longer has, remove them
         for oldDependency in oldDependencies - dependencies:
             self.dependents[oldDependency].remove(cellRef)
+            self.dependencies[cellRef].remove(oldDependency)
 
         # Add all new dependencies (but don't re-add ones that already exist)
         for dependency in dependencies - oldDependencies:

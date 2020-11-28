@@ -131,7 +131,7 @@ class TextField(UIElement):
                     self.text = ''
                 elif event.optionDown:
                     # remove last space-separated entity
-                    # TODO: maybe use rfind?
+                    # this is somewhat costly, but rfind was a huge headache
                     self.text = ' '.join(self.text.split(' ')[:-1])
                 else:
                     self.text = self.text[:-1]
@@ -162,7 +162,8 @@ class TextField(UIElement):
         self._renderText(self.active)
 
     def _renderText(self, editing):
-        if not editing and self.formulaOutput:
+        # NOTE: Do NOT use truthiness, since formulaOutput might be ''
+        if not editing and self.formulaOutput is not None:
             text = self.formulaOutput
         else:
             text = self.text

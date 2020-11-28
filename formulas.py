@@ -49,6 +49,7 @@ class Cell(object):
         cell.raw = text
         if cell.raw[0] == '=':
             cell.formula = Formula.fromText(cell.raw)
+            print('cell.formula =', cell.formula)
             Cell._deps.setDependencies(CellRef(row, col),
                                        cell.formula.getDependencies())
         else:
@@ -116,7 +117,10 @@ class Formula(object):
     def _parseFormula(argString):
         activeFormulae = Stack()
         result = None
+
+        foundTokens = False
         for token, value in Formula._getTokens(argString):
+            foundTokens = True
             if token == '(':
                 activeFormulae.push(Formula(Operator.get(value), []))
             elif token == ')':
@@ -133,6 +137,11 @@ class Formula(object):
             else:
                 activeFormulae.get().operands += Formula._getCellOrLiteral(
                     value)
+
+        if not foundTokens:  # Something like `=D4` or `=2`
+            operand = Formula._getCellOrLiteral(argString)
+            result = Formula(Operator.get('LITERAL'), operand)
+
         return result
 
     # Iteratively returns all tokens and their preceding values in a given
@@ -163,12 +172,13 @@ class Formula(object):
         if text == '':
             return []
         try:
+            # TODO: types
+            intLiteral = int(text)
+            return [intLiteral]
+        except:
             cellRow = int(text[1:]) - 1  # User-facing numbering is 1-based
             cellCol = ord(text[0]) - ord('A')
             return [CellRef(cellRow, cellCol)]
-        except:
-            # TODO: types
-            return [int(text)]
 
     def evaluate(self):
         evaluatedOperands = []
@@ -188,7 +198,7 @@ class Formula(object):
             if isinstance(operand, CellRef):
                 deps.add(operand)
             elif isinstance(operand, Formula):
-                deps.add(operand.getDependencies())
+                deps = deps.union(operand.getDependencies())
         return deps
 
     def __repr__(self):
