@@ -106,9 +106,11 @@ class SpreadsheetGrid(UIElement):
             else:
                 sender.setOutputText(None)
 
-        # FIXME: Only rerender cells that are visible
         for cellRef in Cell.getDependents(row, col):
-            self.renderCell(cellRef.row, cellRef.col)
+            depRow, depCol = cellRef.row, cellRef.col
+            if (self.curLeftCol <= depCol < self.curLeftCol + self.numCols and
+                    self.curTopRow <= depRow < self.curTopRow + self.numRows):
+                self.renderCell(depRow, depCol)
         self.updatePreview()
 
     def renderCell(self, row, col):
