@@ -150,13 +150,16 @@ class TextField(UIElement):
 
     # Sets the text the text field holds
     def setText(self, text):
-        print(f'setting text of {self.name} to', text)
         self.text = str(text)
         self._renderText(self.active)
 
     # Sets the output text for a text field containing a formula
     def setOutputText(self, formulaOutput):
         self.formulaOutput = formulaOutput
+
+    # Manually trigger a rerender of the cell
+    def rerender(self):
+        self._renderText(self.active)
 
     def _renderText(self, editing):
         if not editing and self.formulaOutput:

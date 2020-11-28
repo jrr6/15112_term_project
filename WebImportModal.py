@@ -2,6 +2,11 @@ from modular_graphics.atomic_elements import Rectangle, Text
 from modular_graphics.input_elements import TextField, Button
 from modular_graphics import UIElement
 
+# TODO: The caller needs to block out events going to objects "shadowed"
+#       by the modal--right now we're having issues b/c the cells
+#       behind the modal are inadvertently triggering on click/key.
+#       In fact, it probably makes most sense for the APP to handle modal hide/
+#       show, since it can just cut off all event propagation at the root.
 class Modal(UIElement):
     kWidth = 500
     kInputHeight = 300
@@ -34,9 +39,6 @@ class Modal(UIElement):
         self.appendChild(Button('modal-confirm', buttonX, buttonY,
                                 width=buttonWidth, text='OK',
                                 action=self.submit))
-        # TODO: The caller needs to block out events going to objects "shadowed"
-        #       by the modal--right now we're having issues b/c the cells
-        #       behind the modal are inadvertently triggering on click/key
 
     def submit(self, sender):
         print('submitted')

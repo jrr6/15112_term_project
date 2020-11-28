@@ -2,7 +2,7 @@ from functools import reduce
 
 from typing import Union
 
-from data_structures import Stack
+from data_structures import Stack, DependencyGraph
 from operators import Operator
 
 class Cell(object):
@@ -11,6 +11,7 @@ class Cell(object):
         self.formula = None
 
     _cells = {}
+    _deps = DependencyGraph()
 
     @staticmethod
     def getValue(row, col):
@@ -48,6 +49,16 @@ class Cell(object):
         cell.raw = text
         if cell.raw[0] == '=':
             cell.formula = Formula.fromText(cell.raw)
+            Cell._deps.addDependencies(CellRef(row, col),
+                                       cell.formula.getDependencies())
+        else:
+            cell.formula = None
+            # TODO: Figure out how to handle removing deps
+            # Cell._deps.removeDependencies(CellRef(row, col))
+
+    @staticmethod
+    def getDependents(row, col):
+        return Cell._deps.getDependents(CellRef(row, col))
 
     # Returns computed value of cell (with appropriate type/formula result)
     def value(self):
@@ -76,6 +87,16 @@ class CellRef(object):
 
     def getValue(self):
         return Cell.getValue(self.row, self.col)
+
+    def __hash__(self):
+        return hash((self.row, self.col))
+
+    def __eq__(self, other):
+        return (isinstance(other, CellRef)
+                and other.row == self.row and other.col == self.col)
+
+    def __repr__(self):
+        return f'CellRef({self.row}, {self.col})'
 
 # represents a formula in a cell, where a formula is composed of an operator
 # applied to multiple operands, each of which could be another formula,
@@ -162,11 +183,21 @@ class Formula(object):
                 evaluatedOperands.append(int(operand))
         return self.operator.operate(evaluatedOperands)
 
+    def getDependencies(self):
+        deps = []
+        for operand in self.operands:
+            if isinstance(operand, CellRef):
+                deps.append(operand)
+            elif isinstance(operand, Formula):
+                deps.append(operand.getDependencies())
+        return deps
+
     def __repr__(self):
         operandsStr = reduce(lambda acc, val:
                              f'{acc}, {repr(val)}' if acc else val,
                              self.operands, '')
         return f'{self.operator.name}({operandsStr})'
+
 
 
 # test cases

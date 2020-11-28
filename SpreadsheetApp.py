@@ -96,11 +96,28 @@ class SpreadsheetGrid(UIElement):
                 sender.setOutputText('SYNTAX-ERROR')
                 return  # if we've already got a syntax error, don't try to eval
 
-            try:
-                sender.setOutputText(str(Cell.getValue(row, col)))
-            except:
-                sender.setOutputText('RUNTIME-ERROR')
+            # TODO: Escape doesn't work properly
+            if Cell.hasFormula(row, col):
+                try:
+                    sender.setOutputText(str(Cell.getValue(row, col)))
+                except:
+                    sender.setOutputText('RUNTIME-ERROR')
+                    return
+            else:
+                sender.setOutputText(None)
+
+        for cellRef in Cell.getDependents(row, col):
+            self.renderCell(cellRef.row, cellRef.col)
         self.updatePreview()
+
+    def renderCell(self, row, col):
+        childRow, childCol = row - self.curTopRow, col - self.curLeftCol
+        cell = self.getChild(f'{childRow},{childCol}')
+        try:
+            cell.setOutputText(str(Cell.getValue(row, col)))
+        except:
+            cell.setOutputText('RUNTIME-ERROR')
+        cell.rerender()
 
     # TODO: Preserve selected cell(s) on scroll
     def scroll(self, direction):
@@ -112,8 +129,8 @@ class SpreadsheetGrid(UIElement):
         self.curTopRow += drow
         self.curLeftCol += dcol
         self.removeAllChildren()
-        # TODO: Is recreating everything every time going to become too costly?
-        #       If so, could try to change (x, y) of existing cells.
+        # Is recreating everything every time going to become too costly?
+        # If so, could try to change (x, y) of existing cells.
         self.initChildren()
 
     def getWidth(self):
@@ -138,7 +155,6 @@ class SpreadsheetGrid(UIElement):
             self.activeCell.finishEditing()
         if sender.name[0] == 'H':  # whole column
             for cell in self.selectedCells:
-                cell.deactivate()
                 cell.deselect()
             col = sender.name[1:]
             self.selectedCells =\
@@ -148,7 +164,6 @@ class SpreadsheetGrid(UIElement):
                 cell.select(silent=True)
         elif sender.name[0] == 'S':  # whole row
             for cell in self.selectedCells:
-                cell.deactivate()
                 cell.deselect()
             row = sender.name[1:]
             self.selectedCells =\
@@ -159,7 +174,6 @@ class SpreadsheetGrid(UIElement):
         else:  # individual cell
             for cell in self.selectedCells:
                 if cell is not sender:  # clicking cell twice doesn't deselect
-                    cell.deactivate()
                     cell.deselect()
             self.selectedCells = [sender]
         self.updatePreview()
