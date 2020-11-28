@@ -2,8 +2,8 @@ from functools import reduce
 
 from typing import Union
 
-from data_structures import Stack, DependencyGraph
-from operators import Operator
+from formulae.data_structures import Stack, DependencyGraph
+from formulae.operators import Operator
 
 class Cell(object):
     def __init__(self):

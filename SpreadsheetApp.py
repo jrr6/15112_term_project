@@ -5,7 +5,7 @@
 import string
 from enum import Enum
 
-from formulas import Cell
+from formulae import Cell
 from modular_graphics import UIElement, App
 from modular_graphics.input_elements import TextField
 
