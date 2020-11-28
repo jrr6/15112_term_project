@@ -49,12 +49,11 @@ class Cell(object):
         cell.raw = text
         if cell.raw[0] == '=':
             cell.formula = Formula.fromText(cell.raw)
-            Cell._deps.addDependencies(CellRef(row, col),
+            Cell._deps.setDependencies(CellRef(row, col),
                                        cell.formula.getDependencies())
         else:
             cell.formula = None
-            # TODO: Figure out how to handle removing deps
-            # Cell._deps.removeDependencies(CellRef(row, col))
+            Cell._deps.setDependencies(CellRef(row, col), set())
 
     @staticmethod
     def getDependents(row, col):
@@ -184,12 +183,12 @@ class Formula(object):
         return self.operator.operate(evaluatedOperands)
 
     def getDependencies(self):
-        deps = []
+        deps = set()
         for operand in self.operands:
             if isinstance(operand, CellRef):
-                deps.append(operand)
+                deps.add(operand)
             elif isinstance(operand, Formula):
-                deps.append(operand.getDependencies())
+                deps.add(operand.getDependencies())
         return deps
 
     def __repr__(self):

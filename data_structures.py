@@ -33,41 +33,43 @@ class Stack(object):
         else:
             return None
 
-# A bare-bones graph data structure sufficient for tracking formula dependencies
+# A bare-bones "graph" for representing formula dependency relationships
 class DependencyGraph(object):
     def __init__(self):
-        self.vertices = {}
+        self.dependents: dict = {}
+        self.dependencies: dict = {}
 
-    def addDependencies(self, vertex, dependencies):
-        if vertex not in self.vertices:
-            self.vertices[vertex] = set()
+    def setDependencies(self, cellRef, dependencies: set):
+        if cellRef not in self.dependencies:
+            # we could just use the dependencies param, but that's pass-by-ref,
+            # and who knows what the caller might do with it...
+            self.dependencies[cellRef] = set()
 
-        for dependency in dependencies:
-            if dependency not in self.vertices:
-                self.vertices[dependency] = set()
-            self.vertices[dependency].add(vertex)
+        oldDependencies = self.dependencies[cellRef]
 
-    # removes all dependencies of a single vertex
-    def removeDependencies(self, vertex):
-        if vertex in self.vertices:
-            del self.vertices[vertex]
+        # If there were any old dependencies the cell no longer has, remove them
+        for oldDependency in oldDependencies - dependencies:
+            self.dependents[oldDependency].remove(cellRef)
 
-    # removes a vertex and all references thereto from the graph
-    def removeVertex(self, vertex):
-        for otherVertex in self.vertices:
-            if vertex in otherVertex:
-                otherVertex.remove(vertex)
-        if vertex in self.vertices:
-            del self.vertices[vertex]
+        # Add all new dependencies (but don't re-add ones that already exist)
+        for dependency in dependencies - oldDependencies:
+            if dependency not in self.dependents:
+                self.dependents[dependency] = set()
 
-    # returns all dependents (and dependents-of-dependents, and recursively
-    # forth) of this vertex
-    def getDependents(self, vertex):
-        if vertex not in self.vertices:
+            self.dependents[dependency].add(cellRef)
+            self.dependencies[cellRef].add(dependency)
+
+        # If this cell has no deps or isn't anyone's dep, remove to save space
+        if len(self.dependencies[cellRef]) == 0:
+            del self.dependencies[cellRef]
+        if cellRef in self.dependents and len(self.dependents[cellRef]) == 0:
+            del self.dependents[cellRef]
+
+    def getDependents(self, cellRef):
+        if not cellRef in self.dependents:
             return set()
-        if len(self.vertices[vertex]) == 0:
-            return set()
-        dependents = self.vertices[vertex]
-        for dependent in self.vertices[vertex]:
+
+        dependents = self.dependents[cellRef]
+        for dependent in dependents:
             dependents = dependents.union(self.getDependents(dependent))
         return dependents
