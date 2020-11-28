@@ -122,7 +122,6 @@ class SpreadsheetGrid(UIElement):
             cell.setOutputText('RUNTIME-ERROR')
         cell.rerender()
 
-    # TODO: Preserve selected cell(s) on scroll
     def scroll(self, direction):
         # save current cell if we're in one
         if self.activeCell:
@@ -131,10 +130,25 @@ class SpreadsheetGrid(UIElement):
         drow, dcol = direction.value
         self.curTopRow += drow
         self.curLeftCol += dcol
+
         self.removeAllChildren()
         # Is recreating everything every time going to become too costly?
         # If so, could try to change (x, y) of existing cells.
         self.initChildren()
+
+        # remap selected cells
+        i = 0
+        while i < len(self.selectedCells):
+            selRow, selCol = self.rowColFromCellName(self.selectedCells[i].name)
+            selRow, selCol = int(selRow), int(selCol)
+            selRow -= drow
+            selCol -= dcol
+            if 0 <= selRow < self.numRows and 0 <= selCol < self.numCols:
+                self.selectedCells[i] = self.getChild(f'{selRow},{selCol}')
+                self.selectedCells[i].select(silent=True)
+                i += 1
+            else:
+                self.selectedCells.pop(i)
 
     def getWidth(self):
         return self.numCols * self.colWidth + self.siderWidth
