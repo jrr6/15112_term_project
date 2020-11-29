@@ -185,33 +185,63 @@ class SpreadsheetGrid(UIElement):
             self.getChild(f'{depRow},{depCol}').highlight('orange' if highlight
                                                           else None)
 
-    def setSelectedCells(self, sender):
+    def setSelectedCells(self, sender, modifier):
         if self.activeCell:
             self.activeCell.finishEditing()
-        if sender.name[0] == 'H':  # whole column
-            for cell in self.selectedCells:
-                cell.deselect()
-            col = sender.name[1:]
-            self.selectedCells =\
-                [cell for cell in self.children
-                 if SpreadsheetGrid.rowColFromCellName(cell.name)[1] == col]
-            for cell in self.selectedCells:
-                cell.select(silent=True)
-        elif sender.name[0] == 'S':  # whole row
-            for cell in self.selectedCells:
-                cell.deselect()
-            row = sender.name[1:]
-            self.selectedCells =\
-                [cell for cell in self.children
-                 if SpreadsheetGrid.rowColFromCellName(cell.name)[0] == row]
-            for cell in self.selectedCells:
-                cell.select(silent=True)
-        else:  # individual cell
+
+        if (modifier is not None) and (len(self.selectedCells) > 0):
+            if modifier == 'Command':
+                # Command either adds another, or deselects current
+                if sender in self.selectedCells:
+                    self.selectedCells.remove(sender)
+                    sender.deselect()
+                else:
+                    self.selectedCells.append(sender)
+            elif modifier == 'Shift':
+                self.blockSelect(sender)
+        else:
+            # Deselect everything but sender (if the sender's a header/sider,
+            # it won't be in there anyway, so it's fine)
             for cell in self.selectedCells:
                 if cell is not sender:  # clicking cell twice doesn't deselect
                     cell.deselect()
-            self.selectedCells = [sender]
+
+            if sender.name[0] == 'H' or sender.name == 'S':  # whole row/column
+                # Select the entire col (index 1 in the tuple) if it's a header,
+                # or row (index 0 in the tuple) if it's a sider
+                rowColTupleIdx = 1 if sender.name[0] == 'H' else 0
+                rowCol = int(sender.name[1:])  # the row/col we selected
+                self.selectedCells = []
+                for cell in self.children:
+                    if SpreadsheetGrid.rowColFromCellName(
+                            cell.name)[rowColTupleIdx] == rowCol:
+                        self.selectedCells.append(cell)
+                        cell.select(silent=True)
+            else:  # individual cell
+                self.selectedCells = [sender]
         self.updatePreview()
+
+    # Selects a "block" of cells (i.e., shift-select)
+    def blockSelect(self, sender):
+        pivotCell = self.selectedCells[0]
+        for i in range(1, len(self.selectedCells)):
+            cell = self.selectedCells[i]
+            if cell is not sender:
+                cell.deselect()
+        self.selectedCells = [pivotCell]
+        pivRow, pivCol = SpreadsheetGrid.rowColFromCellName(
+            pivotCell.name)
+        selRow, selCol = SpreadsheetGrid.rowColFromCellName(sender.name)
+        minRow, minCol = min(pivRow, selRow), min(pivCol, selCol)
+        maxRow, maxCol = max(pivRow, selRow), max(pivCol, selCol)
+        for row in range(minRow, maxRow + 1):
+            for col in range(minCol, maxCol + 1):
+                # The pivot is already in there, so don't re-add it
+                # (Note that sender *isn't* in there yet, so it's fine.)
+                if not (row == pivRow and col == pivCol):
+                    cell = self.getChild(f'{row},{col}')
+                    cell.select(silent=True)
+                    self.selectedCells.append(cell)
 
     def updatePreview(self):
         if len(self.selectedCells) == 1:
@@ -221,6 +251,7 @@ class SpreadsheetGrid(UIElement):
                                                          selectedCol))
         else:
             # TODO: Show some useful stats or something...
+            self.getChild('preview').setText('Multiple cells selected')
             pass
 
     def onKeypress(self, event):
@@ -259,9 +290,10 @@ class SpreadsheetGrid(UIElement):
     def rowColFromCellName(name):
         if name[0] not in string.digits:
             return ['-1', '-1']
-        return name.split(',')
+        row, col = name.split(',')
+        return int(row), int(col)
 
     # returns the absolute (NOT relative-to-view) row, col of a given UI cell
     def absRowColFromCellName(self, name):
         row, col = SpreadsheetGrid.rowColFromCellName(name)
-        return int(row) + self.curTopRow, int(col) + self.curLeftCol
+        return row + self.curTopRow, col + self.curLeftCol

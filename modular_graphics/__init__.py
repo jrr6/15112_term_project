@@ -159,6 +159,7 @@ class App(CMUApp, UIElement):
     @staticmethod
     def _addEventMetadata(event):
         # Add checks for modifier keys
+        event.shiftDown = (event.state & 0x1 != 0)
         event.controlDown = (event.state & 0x4 != 0)
         event.commandDown = (event.state & 0x8 != 0)
         event.optionDown = (event.state & 0x10 != 0)

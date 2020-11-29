@@ -57,10 +57,18 @@ class TextField(UIElement):
                 and now < self.doubleClickStart + self.kDoubleClickDelay):
             self.activate()
         else:
-            self.select()
+            # TODO: This behaves strangely if you double-click w/ Command
+            #  down on the second click...
+            if event.shiftDown:
+                modifier = 'Shift'
+            elif event.commandDown:
+                modifier = 'Command'
+            else:
+                modifier = None
+            self.select(modifier=modifier)
             self.doubleClickStart = now
 
-    def select(self, silent=False):
+    def select(self, silent=False, modifier=None):
         # only editable cells meaningfully convey "selection" feedback
         if self.props.get('editable', True):
             self.selected = True
@@ -71,7 +79,7 @@ class TextField(UIElement):
         # however, uneditable cells can still make a selection call (so they
         # can serve as a sort of button)
         if 'onSelect' in self.props and not silent:
-            self.props['onSelect'](self)
+            self.props['onSelect'](self, modifier)
 
     def activate(self):
         self.removeChild('placeholder')
