@@ -9,6 +9,8 @@ from enum import Enum
 from formulae import Cell
 from modular_graphics import UIElement
 from ui_components.UICell import UICell
+from ui_components.WebImporter import WebImporter
+
 
 class Direction(Enum):
     RIGHT = (0, 1)
@@ -272,16 +274,12 @@ class SpreadsheetGrid(UIElement):
                 lastSelection.name)
             # TODO: Implement cell navigation via keyboard input
 
-        # testing modals
-        # if event.key == 'r':
-            # modalWidth, modalHeight = 500, 300
-            # modalX = self.getWidth() // 2 - modalWidth // 2
-            # modalY = self.getHeight() // 2 - modalHeight // 2
-            # self.appendChild(Modal('demo',
-            #                        modalX, modalY,  width=modalWidth,
-            #                        height=modalHeight,
-            #                        message='Enter your favorite color:',
-            #                        input=True))
+        if event.key == 'i' and event.commandDown:
+            if len(self.selectedCells) == 0:
+                return
+
+            importer = WebImporter(onImport=lambda x: x)
+            self.runModal(importer)
 
     # returns row and column for cell with given name.
     # if name doesn't represent a body cell (e.g., header/sider/preview),

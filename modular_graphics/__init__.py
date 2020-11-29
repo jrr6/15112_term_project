@@ -86,6 +86,9 @@ class UIElement(ABC):
         if self in listeners:
             listeners.remove(self)
 
+    def runModal(self, modal):
+        App.instance.runModal(modal)
+
 class App(CMUApp, UIElement):
     instance = None
 
@@ -98,6 +101,7 @@ class App(CMUApp, UIElement):
         UIElement.__init__(self, 'root', 0, 0, {})
         self.width = scene.getWidth()
         self.height = scene.getHeight()
+        self.modalMode = False
         # IMPORTANT: set autorun to false or init will never finish!
         CMUApp.__init__(self, width=self.width, height=self.height,
                         autorun=False)
@@ -155,6 +159,19 @@ class App(CMUApp, UIElement):
 
     def getHeight(self):
         return self.height
+
+    # Shows a modal, blocking all UI interaction outside of the modal until it
+    # is dismissed
+    def runModal(self, view):
+        from modular_graphics.modal import Modal
+        if not self.modalMode:
+            self.modalMode = True
+            self.appendChild(Modal('modal', (self.width - view.getWidth()) // 2,
+                                   50, view=view, onDismiss=self._dismissModal))
+
+    def _dismissModal(self):
+        self.removeChild('modal')
+        self.modalMode = False
 
     @staticmethod
     def _addEventMetadata(event):
