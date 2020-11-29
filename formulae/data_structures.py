@@ -74,3 +74,7 @@ class DependencyGraph(object):
         for dependent in dependents:
             dependents = dependents.union(self.getDependents(dependent))
         return dependents
+
+    # Gets only the first layer of dependencies of a given cell
+    def getShallowDependencies(self, cellRef):
+        return self.dependencies.get(cellRef, set())

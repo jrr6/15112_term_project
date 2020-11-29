@@ -60,6 +60,10 @@ class Cell(object):
     def getDependents(row, col):
         return Cell._deps.getDependents(CellRef(row, col))
 
+    @staticmethod
+    def getShallowDependencies(row, col):
+        return Cell._deps.getShallowDependencies(CellRef(row, col))
+
     # Returns computed value of cell (with appropriate type/formula result)
     def value(self):
         if self.formula:

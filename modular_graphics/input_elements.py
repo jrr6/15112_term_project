@@ -161,6 +161,10 @@ class TextField(UIElement):
     def rerender(self):
         self._renderText(self.active)
 
+    # highlights the cell the given color, or resets highlight if None passed
+    def highlight(self, color):
+        self.getChild('border').props['fill'] = color
+
     def _renderText(self, editing):
         # NOTE: Do NOT use truthiness, since formulaOutput might be ''
         if not editing and self.formulaOutput is not None:

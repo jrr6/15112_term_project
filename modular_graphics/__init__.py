@@ -117,6 +117,7 @@ class App(CMUApp, UIElement):
             childIdx -= 1
 
     def processMouseEvent(self, element: UIElement, event):
+        propagateToChildren = True
         if (element.x <= event.x <= element.x + element.getWidth()
                 and element.y <= event.y <= element.y + element.getHeight()):
             # This would be easier with copy.(deep)copy, but we get pickling
@@ -125,11 +126,19 @@ class App(CMUApp, UIElement):
             oldY = event.y
             event.x -= element.x
             event.y -= element.y
+
+            def stopPropagation():
+                nonlocal propagateToChildren
+                propagateToChildren = False
+
+            event.stopPropagation = stopPropagation
             element.onClick(event)
             event.x = oldX
             event.y = oldY
-        for child in element.children:
-            self.processMouseEvent(child, event)
+
+        if propagateToChildren:
+            for child in element.children:
+                self.processMouseEvent(child, event)
 
     def keyPressed(self, event):
         App._addEventMetadata(event)

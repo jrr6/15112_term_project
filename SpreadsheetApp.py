@@ -83,9 +83,11 @@ class SpreadsheetGrid(UIElement):
     # NOTE: this might be called by a selected-but-not-active cell,
     #       so ALWAYS use sender instead of (possibly-None) self.activeCell
     def saveCell(self, sender):
-        row, col = map(lambda x: int(x), sender.name.split(','))
-        row += self.curTopRow
-        col += self.curLeftCol
+        row, col = self.absRowColFromCellName(sender.name)
+
+        # NOTE: we need to call this here and NOT in deactivate because
+        #       we need access to the OLD set of deps to unhighlight
+        self.toggleDependencyHighlights(False)
         if sender.text == '':
             Cell.delete(row, col)
         else:
@@ -106,6 +108,7 @@ class SpreadsheetGrid(UIElement):
             else:
                 sender.setOutputText(None)
 
+        # TODO: Something is up with dependents
         for cellRef in Cell.getDependents(row, col):
             depRow, depCol = cellRef.row, cellRef.col
             if (self.curLeftCol <= depCol < self.curLeftCol + self.numCols and
@@ -139,7 +142,8 @@ class SpreadsheetGrid(UIElement):
         # remap selected cells
         i = 0
         while i < len(self.selectedCells):
-            selRow, selCol = self.rowColFromCellName(self.selectedCells[i].name)
+            selRow, selCol = SpreadsheetGrid.rowColFromCellName(
+                self.selectedCells[i].name)
             selRow, selCol = int(selRow), int(selCol)
             selRow -= drow
             selCol -= dcol
@@ -160,12 +164,25 @@ class SpreadsheetGrid(UIElement):
         if self.activeCell:
             self.activeCell.finishEditing()
         self.activeCell = sender
+        self.toggleDependencyHighlights(True)
 
     def handleDeactivation(self, sender):
         # Cells may redundantly "deactivate" for safety, so only update
         # self.activeCell if the current active cell is the one deactivating
         if sender is self.activeCell:
             self.activeCell = None
+
+    def toggleDependencyHighlights(self, highlight):
+        # we might have had a selected-but-not-active cell trigger this
+        if not self.activeCell:
+            return
+        row, col = self.absRowColFromCellName(self.activeCell.name)
+        for depRef in Cell.getShallowDependencies(row, col):
+            print('setting dep', depRef)
+            depRow, depCol = (depRef.row + self.curTopRow,
+                              depRef.col + self.curLeftCol)
+            self.getChild(f'{depRow},{depCol}').highlight('orange' if highlight
+                                                          else None)
 
     def setSelectedCells(self, sender):
         if self.activeCell:
@@ -197,10 +214,8 @@ class SpreadsheetGrid(UIElement):
 
     def updatePreview(self):
         if len(self.selectedCells) == 1:
-            selectedRow, selectedCol = list(map(lambda x: int(x),
-                SpreadsheetGrid.rowColFromCellName(self.selectedCells[0].name)))
-            selectedRow += self.curTopRow
-            selectedCol += self.curLeftCol
+            selectedRow, selectedCol = self.absRowColFromCellName(
+                self.selectedCells[0].name)
             self.getChild('preview').setText(Cell.getRaw(selectedRow,
                                                          selectedCol))
         else:
@@ -244,6 +259,11 @@ class SpreadsheetGrid(UIElement):
         if name[0] not in string.digits:
             return ['-1', '-1']
         return name.split(',')
+
+    # returns the absolute (NOT relative-to-view) row, col of a given UI cell
+    def absRowColFromCellName(self, name):
+        row, col = SpreadsheetGrid.rowColFromCellName(name)
+        return int(row) + self.curTopRow, int(col) + self.curLeftCol
 
 class Scene(UIElement):
     def __init__(self):
