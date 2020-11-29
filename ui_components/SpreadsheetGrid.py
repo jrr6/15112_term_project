@@ -8,7 +8,7 @@ from enum import Enum
 
 from formulae import Cell
 from modular_graphics import UIElement
-from modular_graphics.input_elements import TextField
+from ui_components.UICell import UICell
 
 class Direction(Enum):
     RIGHT = (0, 1)
@@ -33,22 +33,22 @@ class SpreadsheetGrid(UIElement):
         for headerNum in range(self.numCols):
             x = headerNum * self.colWidth + self.siderWidth  # skip over siders
             label = chr(ord('A') + headerNum + self.curLeftCol)
-            self.appendChild(TextField(f'H{headerNum}', x, 0,
-                                       placeholder='', editable=False,
-                                       text=label, width=self.colWidth,
-                                       height=self.rowHeight, fill='lightgray',
-                                       align='center',
-                                       onSelect=self.setSelectedCells))
+            self.appendChild(UICell(f'H{headerNum}', x, 0,
+                                    placeholder='', editable=False,
+                                    text=label, width=self.colWidth,
+                                    height=self.rowHeight, fill='lightgray',
+                                    align='center',
+                                    onSelect=self.setSelectedCells))
 
         for siderNum in range(self.numRows):
             y = (1 + siderNum) * self.rowHeight  # don't label headers
             label = siderNum + self.curTopRow + 1
-            self.appendChild(TextField(f'S{siderNum}', 0, y,
-                                       placeholder='', editable=False,
-                                       text=str(label),
-                                       width=self.siderWidth, fill='lightgray',
-                                       height=self.rowHeight, align='center',
-                                       onSelect=self.setSelectedCells))
+            self.appendChild(UICell(f'S{siderNum}', 0, y,
+                                    placeholder='', editable=False,
+                                    text=str(label),
+                                    width=self.siderWidth, fill='lightgray',
+                                    height=self.rowHeight, align='center',
+                                    onSelect=self.setSelectedCells))
 
         for rowNum in range(self.numRows):
             for colNum in range(self.numCols):
@@ -62,21 +62,21 @@ class SpreadsheetGrid(UIElement):
                 existingOutput = (str(Cell.getValue(cellRow, cellCol))
                                   if Cell.hasFormula(cellRow, cellCol)
                                   else None)
-                tf = TextField(f'{rowNum},{colNum}', x, y,
-                               placeholder='', width=self.colWidth,
-                               height=self.rowHeight,
-                               text=existingText,
-                               output=existingOutput,
-                               onChange=self.saveCell,
-                               onActivate=self.setActiveCell,
-                               onSelect=self.setSelectedCells,
-                               onDeactivate=self.handleDeactivation)
+                tf = UICell(f'{rowNum},{colNum}', x, y,
+                            placeholder='', width=self.colWidth,
+                            height=self.rowHeight,
+                            text=existingText,
+                            output=existingOutput,
+                            onChange=self.saveCell,
+                            onActivate=self.setActiveCell,
+                            onSelect=self.setSelectedCells,
+                            onDeactivate=self.handleDeactivation)
                 self.appendChild(tf)
 
         previewY = (1 + self.numRows) * self.rowHeight
-        self.appendChild(TextField('preview', 0, previewY,  placeholder='',
-                                   width=self.getWidth(), height=self.rowHeight,
-                                   editable=False, visibleChars=115))
+        self.appendChild(UICell('preview', 0, previewY, placeholder='',
+                                width=self.getWidth(), height=self.rowHeight,
+                                editable=False, visibleChars=115))
 
         self.makeKeyListener()
 

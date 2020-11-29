@@ -4,7 +4,7 @@
 # Main code file -- contains top-level UI for spreadsheet app
 
 from modular_graphics import UIElement, App
-from ui_components.SpreadsheetGrid import SpreadsheetGrid
+from ui_components import SpreadsheetGrid
 
 class Scene(UIElement):
     def __init__(self):

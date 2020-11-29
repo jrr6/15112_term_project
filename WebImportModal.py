@@ -1,5 +1,6 @@
 from modular_graphics.atomic_elements import Rectangle, Text
-from modular_graphics.input_elements import TextField, Button
+from modular_graphics.input_elements import Button
+from ui_components import UICell
 from modular_graphics import UIElement
 
 # TODO: The caller needs to block out events going to objects "shadowed"
@@ -34,8 +35,8 @@ class Modal(UIElement):
         self.appendChild(Text('modal-text', textX, textY, text=self.message,
                               anchor='center'))
         if self.input:
-            self.appendChild(TextField('modal-input-field', inputX, inputY,
-                                       width=inputWidth))
+            self.appendChild(UICell('modal-input-field', inputX, inputY,
+                                    width=inputWidth))
         self.appendChild(Button('modal-confirm', buttonX, buttonY,
                                 width=buttonWidth, text='OK',
                                 action=self.submit))
