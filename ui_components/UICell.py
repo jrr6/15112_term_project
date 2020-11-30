@@ -58,8 +58,6 @@ class UICell(UIElement):
                 and now < self.doubleClickStart + self.kDoubleClickDelay):
             self.activate()
         else:
-            # TODO: This behaves strangely if you double-click w/ Command
-            #  down on the second click...
             if event.shiftDown:
                 modifier = 'Shift'
             elif event.commandDown:

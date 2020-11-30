@@ -49,7 +49,6 @@ class Cell(object):
             cell = Cell()
             Cell._cells[row, col] = cell
         cell.raw = text
-        # TODO: We aren't unsetting deps correctly!
         if len(cell.raw) > 0 and cell.raw[0] == '=':
             cell.formula = Formula.fromText(cell.raw)
             print('cell.formula =', cell.formula, 'with deps', cell.formula.getDependencies())
@@ -149,6 +148,7 @@ class Formula(object):
             operand = Formula._getCellOrLiteral(argString)
             result = Formula(Operator.get('LITERAL'), operand)
 
+        # TODO: Figure out why the types of the operands aren't consistent
         return result
 
     # Iteratively returns all tokens and their preceding values in a given

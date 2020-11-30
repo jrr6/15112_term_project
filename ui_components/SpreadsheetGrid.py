@@ -100,31 +100,27 @@ class SpreadsheetGrid(UIElement):
                 sender.setOutputText('SYNTAX-ERROR')
                 return  # if we've already got a syntax error, don't try to eval
 
-            # TODO: Escape doesn't work properly
             if Cell.hasFormula(row, col):
-                try:
-                    sender.setOutputText(str(Cell.getValue(row, col)))
-                except:
-                    sender.setOutputText('RUNTIME-ERROR')
-                    return
+                # This is already being rendered by the cell on deactivation
+                self.renderCell(row, col, explicitRerender=False)
             else:
                 sender.setOutputText(None)
 
-        # TODO: Something is up with dependents
         for cellRef in Cell.getDependents(row, col):
             depRow, depCol = cellRef.row, cellRef.col
             if self.absPosIsVisible(depRow, depCol):
                 self.renderCell(depRow, depCol)
         self.updatePreview()
 
-    def renderCell(self, row, col):
+    def renderCell(self, row, col, explicitRerender=True):
         childRow, childCol = row - self.curTopRow, col - self.curLeftCol
         cell = self.getChild(f'{childRow},{childCol}')
         try:
             cell.setOutputText(str(Cell.getValue(row, col)))
         except:
             cell.setOutputText('RUNTIME-ERROR')
-        cell.rerender()
+        if explicitRerender:
+            cell.rerender()
 
     def scroll(self, direction):
         # save current cell if we're in one
@@ -176,6 +172,8 @@ class SpreadsheetGrid(UIElement):
         # Cells may redundantly "deactivate" for safety, so only update
         # self.activeCell if the current active cell is the one deactivating
         if sender is self.activeCell:
+            # this is especially important if we're scrolling so we don't have
+            # zombies!
             self.toggleDependencyHighlights(False)
             self.activeCell = None
 
@@ -197,12 +195,13 @@ class SpreadsheetGrid(UIElement):
 
         row, col = self.absRowColFromCellName(self.activeCell.name)
         for depRef in Cell.getShallowDependencies(row, col):
-            print('setting dep', depRef)
-            depRow, depCol = (depRef.row + self.curTopRow,
-                              depRef.col + self.curLeftCol)
-            child = self.getChild(f'{depRow},{depCol}')
-            child.highlight('orange')
-            self.highlighted.append(child)
+            if self.absPosIsVisible(depRef.row, depRef.col):
+                print('highlighting dep', depRef)
+                depRow, depCol = (depRef.row - self.curTopRow,
+                                  depRef.col - self.curLeftCol)
+                child = self.getChild(f'{depRow},{depCol}')
+                child.highlight('orange')
+                self.highlighted.append(child)
 
     def setSelectedCells(self, sender, modifier):
         if self.activeCell:

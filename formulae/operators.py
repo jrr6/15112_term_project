@@ -48,7 +48,7 @@ def average(operands):
 
 def mode(operands):
     if operands == []:
-        return None  # TODO: should this be 0?
+        return 0
     occurrences = {}
     for el in operands:
         if el in occurrences:
