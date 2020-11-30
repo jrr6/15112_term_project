@@ -1,3 +1,8 @@
+# modal.py
+# Joseph Rotella (jrotella, F0)
+#
+# Contains classes for modal dialogs.
+
 from modular_graphics.atomic_elements import Rectangle, Text
 from modular_graphics.input_elements import Button
 from modular_graphics import UIElement

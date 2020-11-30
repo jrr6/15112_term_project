@@ -1,3 +1,7 @@
+# formulae
+# Joseph Rotella (jrotella, F0)
+#
+# Contains main classes for formula parsing, representation, and evaluation.
 import string
 from functools import reduce
 
