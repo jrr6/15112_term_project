@@ -47,6 +47,9 @@ class UIElement(ABC):
         pass
 
     def appendChild(self, element):
+        if element.name in self.childIds:
+            raise Exception(f'Attempt to add child with duplicate ID '
+                            f'{element.name}')
         element.x += self.x
         element.y += self.y
         # We must init children AFTER changing the x,y
@@ -69,6 +72,7 @@ class UIElement(ABC):
 
     def removeAllChildren(self):
         self.children = []
+        self.childIds = {}
 
     def onClick(self, event):
         pass

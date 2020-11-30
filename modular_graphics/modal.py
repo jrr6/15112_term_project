@@ -9,6 +9,10 @@ class ModalView(UIElement):
     def __init__(self, props):
         super().__init__('modalview', 0, Modal.kViewTopMargin, props)
 
+    # Placeholder--populated by Modal when constructed
+    def dismiss(self):
+        pass
+
 # Displays an arbitrary subview in modal format
 class Modal(UIElement):
     kCloseButtonSize = 15
@@ -21,6 +25,8 @@ class Modal(UIElement):
         self.input = props.get('input', False)
         # you can't create a modal without a subview!
         self.subview = props['view']
+        # Hacky, but it works
+        self.subview.dismiss = self.props['onDismiss']
 
     def initChildren(self):
         self.appendChild(Rectangle('modal-container', 0, 0,

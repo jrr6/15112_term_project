@@ -278,8 +278,12 @@ class SpreadsheetGrid(UIElement):
             if len(self.selectedCells) == 0:
                 return
 
-            importer = WebImporter(onImport=lambda x: x)
+            importer = WebImporter(onImport=self.importWebTable)
             self.runModal(importer)
+
+    def importWebTable(self, table):
+        pass
+        # RETURN TRUE/FALSE
 
     # returns row and column for cell with given name.
     # if name doesn't represent a body cell (e.g., header/sider/preview),
