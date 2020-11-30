@@ -150,10 +150,22 @@ class App(CMUApp, UIElement):
 
     def keyPressed(self, event):
         App._addEventMetadata(event)
+        i = 0
+        called = set()
         # Elements might resign key listener status when this is triggered,
-        # so make a copy so we don't skip anyone
-        for listener in copy.copy(App.keyListeners):
-            listener.onKeypress(event)
+        # and calling onKeypress on one element might cause a different element
+        # to resign before it's even been called OR add in a new key listener
+        # to the end of the list (!), so just keep track of everyone we've
+        # called and keep going until no more are left
+        while i < len(App.keyListeners):
+            # note that names may be duplicates because names are unique only
+            # among children of one element, so we must store the whole object
+            if App.keyListeners[i] in called:
+                i += 1
+            else:
+                # Do this BEFOREHAND because caller might do weird stuff to kL
+                called.add(App.keyListeners[i])
+                App.keyListeners[i].onKeypress(event)
 
     def redrawAll(self, canvas):
         self.draw(RelativeCanvas(canvas, 0, 0))
