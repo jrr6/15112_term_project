@@ -1,3 +1,4 @@
+import string
 from functools import reduce
 
 from typing import Union
@@ -50,7 +51,7 @@ class Cell(object):
         # TODO: We aren't unsetting deps correctly!
         if len(cell.raw) > 0 and cell.raw[0] == '=':
             cell.formula = Formula.fromText(cell.raw)
-            print('cell.formula =', cell.formula)
+            print('cell.formula =', cell.formula, 'with deps', cell.formula.getDependencies())
             Cell._deps.setDependencies(CellRef(row, col),
                                        cell.formula.getDependencies())
         else:
@@ -176,14 +177,19 @@ class Formula(object):
     def _getCellOrLiteral(text):
         if text == '':
             return []
-        try:
-            # TODO: types
-            intLiteral = int(text)
-            return [intLiteral]
-        except:
+
+        hasRowNum = True
+        for char in text[1:]:
+            if char not in string.digits:
+                hasRowNum = False
+                break
+
+        if text[0] in string.ascii_uppercase and hasRowNum:
             cellRow = int(text[1:]) - 1  # User-facing numbering is 1-based
             cellCol = ord(text[0]) - ord('A')
             return [CellRef(cellRow, cellCol)]
+        else:
+            return [text]
 
     def evaluate(self):
         evaluatedOperands = []
@@ -193,8 +199,7 @@ class Formula(object):
             elif isinstance(operand, CellRef):
                 evaluatedOperands.append(operand.getValue())
             else:
-                # TODO: for now, we just assume it's an appropriate data type
-                evaluatedOperands.append(int(operand))
+                evaluatedOperands.append(operand)
         return self.operator.operate(evaluatedOperands)
 
     def getDependencies(self):

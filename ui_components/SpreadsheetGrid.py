@@ -30,6 +30,7 @@ class SpreadsheetGrid(UIElement):
         self.curLeftCol = 0
         self.activeCell = None
         self.selectedCells = []
+        self.highlighted = []
 
     def initChildren(self):
         for headerNum in range(self.numCols):
@@ -89,9 +90,6 @@ class SpreadsheetGrid(UIElement):
     def saveCell(self, sender):
         row, col = self.absRowColFromCellName(sender.name)
 
-        # NOTE: we need to call this here and NOT in deactivate because
-        #       we need access to the OLD set of deps to unhighlight
-        self.toggleDependencyHighlights(False)
         if sender.text == '':
             Cell.delete(row, col)
         else:
@@ -178,6 +176,7 @@ class SpreadsheetGrid(UIElement):
         # Cells may redundantly "deactivate" for safety, so only update
         # self.activeCell if the current active cell is the one deactivating
         if sender is self.activeCell:
+            self.toggleDependencyHighlights(False)
             self.activeCell = None
 
     def handleDeselection(self, sender):
@@ -188,13 +187,22 @@ class SpreadsheetGrid(UIElement):
         # we might have had a selected-but-not-active cell trigger this
         if not self.activeCell:
             return
+        if len(self.highlighted) > 0:
+            for cell in self.highlighted:
+                cell.highlight(None)
+            self.highlighted = []
+
+        if not highlight:
+            return
+
         row, col = self.absRowColFromCellName(self.activeCell.name)
         for depRef in Cell.getShallowDependencies(row, col):
             print('setting dep', depRef)
             depRow, depCol = (depRef.row + self.curTopRow,
                               depRef.col + self.curLeftCol)
-            self.getChild(f'{depRow},{depCol}').highlight('orange' if highlight
-                                                          else None)
+            child = self.getChild(f'{depRow},{depCol}')
+            child.highlight('orange')
+            self.highlighted.append(child)
 
     def setSelectedCells(self, sender, modifier):
         if self.activeCell:

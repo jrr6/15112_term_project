@@ -11,12 +11,28 @@ import random
 class Operator(object):
     _operators = {}
 
-    def __init__(self, name, func):
+    def __init__(self, name, func, numerical=True):
         self.name = name
         self.func = func
+        self.numerical = numerical
         Operator._operators[self.name] = self
 
+    def _numberizeOperands(self, operands):
+        newOperands = []
+        for operand in operands:
+            if isinstance(operand, int):
+                newOperands.append(operand)
+            else:
+                try:
+                    newOperands.append(int(operand.replace(',', '')))
+                except:
+                    newOperands.append(0)
+        return newOperands
+
     def operate(self, operands):
+        # TODO: make this more robust
+        if self.numerical:
+            operands = self._numberizeOperands(operands)
         return self.func(operands)
 
     @staticmethod
@@ -53,7 +69,8 @@ def mode(operands):
 
 # OPERATOR DEFINITIONS
 
-Operator('LITERAL', lambda x: x[0])  # Utility operator for literal formulae
+# Utility operator for literal formulae
+Operator('LITERAL', lambda x: x[0], numerical=False)
 
 Operator('ADD', sum)
 Operator('AVERAGE', lambda x: sum(x) / len(x))
