@@ -83,7 +83,7 @@ class UIElement(ABC):
     def makeKeyListener(self):
         listeners = App.keyListeners
         if self not in listeners:
-            listeners.append(self)
+            listeners.add(self)
 
     def resignKeyListener(self):
         listeners = App.keyListeners
@@ -96,10 +96,10 @@ class UIElement(ABC):
 class App(CMUApp, UIElement):
     instance = None
 
-    # TODO: Making this class-level feels wrong, but we need it to be accessible
-    #       before App is finished initing (otherwise we can't register key
-    #       listeners in `initChildren()`)
-    keyListeners = []
+    # Making this class-level feels wrong, but we need it to be accessible
+    # before App is finished initing (otherwise we can't register key
+    # listeners in `initChildren()`)
+    keyListeners = set()
 
     def __init__(self, scene):
         UIElement.__init__(self, 'root', 0, 0, {})
