@@ -304,12 +304,14 @@ class SpreadsheetGrid(UIElement):
         for row in table.rows:
             for cell in row:
                 text = cell  # Tables want to be immutable
-                if text[0] == '=':
+                if len(text) > 0 and text[0] == '=':
                     # No arbitrary code execution!
                     text = text[1:]
                 Cell.setRaw(curRow, curCol, text)
                 if self.absPosIsVisible(curRow, curCol):
-                    uiCell = self.getChild(f'{curRow},{curCol}')
+                    relRow = curRow - self.curTopRow
+                    relCol = curCol - self.curLeftCol
+                    uiCell = self.getChild(f'{relRow},{relCol}')
                     uiCell.setOutputText(None)
                     uiCell.setText(text)
                 curCol += 1

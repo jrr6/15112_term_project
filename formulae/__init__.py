@@ -48,7 +48,7 @@ class Cell(object):
             Cell._cells[row, col] = cell
         cell.raw = text
         # TODO: We aren't unsetting deps correctly!
-        if cell.raw[0] == '=':
+        if len(cell.raw) > 0 and cell.raw[0] == '=':
             cell.formula = Formula.fromText(cell.raw)
             print('cell.formula =', cell.formula)
             Cell._deps.setDependencies(CellRef(row, col),

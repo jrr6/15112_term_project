@@ -118,6 +118,11 @@ class App(CMUApp, UIElement):
 
     def mousePressed(self, event):
         App._addEventMetadata(event)
+
+        if self.modalMode:
+            self.processMouseEvent(self.getChild('modal'), event)
+            return
+
         childIdx = len(self.children) - 1
         while childIdx >= 0:
             curChild = self.children[childIdx]
@@ -149,6 +154,10 @@ class App(CMUApp, UIElement):
                 self.processMouseEvent(child, event)
 
     def keyPressed(self, event):
+        if self.modalMode:
+            # TODO: Figure out key listeners in modal mode!
+            pass
+
         App._addEventMetadata(event)
         i = 0
         called = set()
