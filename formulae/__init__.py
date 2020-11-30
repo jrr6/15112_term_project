@@ -36,6 +36,7 @@ class Cell(object):
     @staticmethod
     def delete(row, col):
         if (row, col) in Cell._cells:
+            Cell._deps.setDependencies(CellRef(row, col), set())
             del Cell._cells[row, col]
 
     # Sets raw value of cell as well as formula, if applicable
