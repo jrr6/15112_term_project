@@ -9,7 +9,7 @@ from enum import Enum
 from formulae import Cell
 from modular_graphics import UIElement
 from ui_components.UICell import UICell
-from ui_components.WebImporter import WebImporter
+from ui_components.WebImporter import WebImporter, Table
 
 
 class Direction(Enum):
@@ -115,8 +115,7 @@ class SpreadsheetGrid(UIElement):
         # TODO: Something is up with dependents
         for cellRef in Cell.getDependents(row, col):
             depRow, depCol = cellRef.row, cellRef.col
-            if (self.curLeftCol <= depCol < self.curLeftCol + self.numCols and
-                    self.curTopRow <= depRow < self.curTopRow + self.numRows):
+            if self.absPosIsVisible(depRow, depCol):
                 self.renderCell(depRow, depCol)
         self.updatePreview()
 
@@ -295,9 +294,28 @@ class SpreadsheetGrid(UIElement):
             importer = WebImporter(onImport=self.importWebTable)
             self.runModal(importer)
 
-    def importWebTable(self, table):
-        pass
-        # RETURN TRUE/FALSE
+    def importWebTable(self, table: Table):
+        numLetteredCols = 26
+        selRow, selCol = self.absRowColFromCellName(self.selectedCells[0].name)
+        if selCol + table.longestRowLength >= numLetteredCols:
+            return False
+
+        curRow, curCol = selRow, selCol
+        for row in table.rows:
+            for cell in row:
+                text = cell  # Tables want to be immutable
+                if text[0] == '=':
+                    # No arbitrary code execution!
+                    text = text[1:]
+                Cell.setRaw(curRow, curCol, text)
+                if self.absPosIsVisible(curRow, curCol):
+                    uiCell = self.getChild(f'{curRow},{curCol}')
+                    uiCell.setOutputText(None)
+                    uiCell.setText(text)
+                curCol += 1
+            curRow += 1
+            curCol = selCol
+        return True
 
     # returns row and column for cell with given name.
     # if name doesn't represent a body cell (e.g., header/sider/preview),
@@ -313,3 +331,8 @@ class SpreadsheetGrid(UIElement):
     def absRowColFromCellName(self, name):
         row, col = SpreadsheetGrid.rowColFromCellName(name)
         return row + self.curTopRow, col + self.curLeftCol
+
+    # returns whether the given absolute cell position is currently in view
+    def absPosIsVisible(self, row, col):
+        return (self.curLeftCol <= col < self.curLeftCol + self.numCols and
+                self.curTopRow <= row < self.curTopRow + self.numRows)

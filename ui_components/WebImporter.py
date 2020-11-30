@@ -11,12 +11,31 @@ from modular_graphics.modal import ModalView
 
 class Table(object):
     def __init__(self, rows, name):
-        self.rows = rows
-        self.name = name
+        self._rows = rows
+        self._name = name
+
+        self._longestRowLength = 0
+        for row in self._rows:
+            rowLen = len(row)
+            if rowLen > self._longestRowLength:
+                self._longestRowLength = rowLen
+
+    # rows need to be immutable so computations remain correct
+    @property
+    def rows(self):
+        return self._rows
+
+    @property
+    def name(self):
+        return self._name
+
+    @property
+    def longestRowLength(self):
+        return self._longestRowLength
 
     def getColDisplayWidths(self):
         cellWidths = []
-        for row in self.rows:
+        for row in self._rows:
             for colIdx in range(len(row)):
                 cellText = row[colIdx]
                 if len(cellWidths) <= colIdx:
@@ -29,7 +48,7 @@ class Table(object):
         res = ''
         cellWidths = self.getColDisplayWidths()
 
-        for row in self.rows:
+        for row in self._rows:
             for cellIdx in range(len(row)):
                 res += row[cellIdx].ljust(cellWidths[cellIdx])
             res += '\n'
