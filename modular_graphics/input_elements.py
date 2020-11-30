@@ -7,6 +7,7 @@ import string
 from modular_graphics import UIElement
 from modular_graphics.atomic_elements import Rectangle, Text
 
+# TODO: Need to make UICell a subclass to avoid redundant code
 class TextField(UIElement):
     def __init__(self, name, x, y, **props):
         super().__init__(name, x, y, props)

@@ -72,7 +72,8 @@ class SpreadsheetGrid(UIElement):
                             onChange=self.saveCell,
                             onActivate=self.setActiveCell,
                             onSelect=self.setSelectedCells,
-                            onDeactivate=self.handleDeactivation)
+                            onDeactivate=self.handleDeactivation,
+                            onDeselect=self.handleDeselection)
                 self.appendChild(tf)
 
         previewY = (1 + self.numRows) * self.rowHeight
@@ -152,14 +153,13 @@ class SpreadsheetGrid(UIElement):
             selCol -= dcol
             if 0 <= selRow < self.numRows and 0 <= selCol < self.numCols:
                 # deselect the "old version" of this cell
-                self.selectedCells[i].deselect()
+                self.selectedCells[i].deselect(silent=True)
                 # select the "new version"
                 self.selectedCells[i] = self.getChild(f'{selRow},{selCol}')
                 self.selectedCells[i].select(silent=True)
                 i += 1
             else:
-                self.selectedCells[i].deselect()
-                self.selectedCells.pop(i)
+                self.selectedCells[i].deselect()  # removes for us!
 
     def getWidth(self):
         return self.numCols * self.colWidth + self.siderWidth
@@ -170,6 +170,8 @@ class SpreadsheetGrid(UIElement):
     def setActiveCell(self, sender):
         if self.activeCell:
             self.activeCell.finishEditing()
+
+        self.deselectAllCellsButSender(sender)
         self.activeCell = sender
         self.toggleDependencyHighlights(True)
 
@@ -178,6 +180,10 @@ class SpreadsheetGrid(UIElement):
         # self.activeCell if the current active cell is the one deactivating
         if sender is self.activeCell:
             self.activeCell = None
+
+    def handleDeselection(self, sender):
+        if sender in self.selectedCells:
+            self.selectedCells.remove(sender)
 
     def toggleDependencyHighlights(self, highlight):
         # we might have had a selected-but-not-active cell trigger this
@@ -199,8 +205,7 @@ class SpreadsheetGrid(UIElement):
             if modifier == 'Command':
                 # Command either adds another, or deselects current
                 if sender in self.selectedCells:
-                    self.selectedCells.remove(sender)
-                    sender.deselect()
+                    sender.deselect()  # removes for us!
                 else:
                     self.selectedCells.append(sender)
             elif modifier == 'Shift':
@@ -208,9 +213,7 @@ class SpreadsheetGrid(UIElement):
         else:
             # Deselect everything but sender (if the sender's a header/sider,
             # it won't be in there anyway, so it's fine)
-            for cell in self.selectedCells:
-                if cell is not sender:  # clicking cell twice doesn't deselect
-                    cell.deselect()
+            self.deselectAllCellsButSender(sender)
 
             if sender.name[0] == 'H' or sender.name == 'S':  # whole row/column
                 # Select the entire col (index 1 in the tuple) if it's a header,
@@ -230,10 +233,7 @@ class SpreadsheetGrid(UIElement):
     # Selects a "block" of cells (i.e., shift-select)
     def blockSelect(self, sender):
         pivotCell = self.selectedCells[0]
-        for i in range(1, len(self.selectedCells)):
-            cell = self.selectedCells[i]
-            if cell is not sender:
-                cell.deselect()
+        self.deselectAllCellsButSender(sender, startIndex=1)
         self.selectedCells = [pivotCell]
         pivRow, pivCol = SpreadsheetGrid.rowColFromCellName(
             pivotCell.name)
@@ -248,6 +248,16 @@ class SpreadsheetGrid(UIElement):
                     cell = self.getChild(f'{row},{col}')
                     cell.select(silent=True)
                     self.selectedCells.append(cell)
+
+    # Utility method to deselect all cells except one (starting at some index)
+    def deselectAllCellsButSender(self, sender, startIndex=0):
+        i = startIndex
+        while i < len(self.selectedCells):
+            selCell = self.selectedCells[i]
+            if selCell is not sender:
+                self.selectedCells[i].deselect()  # removes for us!
+            else:
+                i += 1
 
     def updatePreview(self):
         if len(self.selectedCells) == 1:

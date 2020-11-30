@@ -70,6 +70,7 @@ class UICell(UIElement):
             self.doubleClickStart = now
 
     def select(self, silent=False, modifier=None):
+        print('select', self.name)
         # only editable cells meaningfully convey "selection" feedback
         if self.props.get('editable', True):
             self.selected = True
@@ -83,6 +84,7 @@ class UICell(UIElement):
             self.props['onSelect'](self, modifier)
 
     def activate(self):
+        print('activate', self.name)
         self.removeChild('placeholder')
         self.getChild('border').props['fill'] = 'lightblue'
         self.makeKeyListener()
@@ -92,17 +94,21 @@ class UICell(UIElement):
             self.props['onActivate'](self)
 
     # deselects the cell
-    def deselect(self):
+    def deselect(self, silent=False):
+        print('deselect', self.name)
         self.selected = False
         self.doubleClickStart = 0  # don't jump to activation if clicked again
         self.resignKeyListener()
         self.getChild('border').props['borderColor'] = 'black'
         self.getChild('border').props['borderWidth'] = 1
         # TODO: Find some way to make sure preview updates when we deselect
+        if 'onDeselect' in self.props and not silent:
+            self.props['onDeselect'](self)
 
     # exits active (editing) mode WITHOUT saving (call finishEditing to save!)
     # NOTE: does NOT deselect (cells stay selected after editing finishes!)
     def deactivate(self):
+        print('deactivate', self.name)
         self.active = False
         self.getChild('border').props['fill'] = None
         self._renderText(False)
