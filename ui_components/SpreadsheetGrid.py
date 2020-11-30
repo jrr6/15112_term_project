@@ -151,10 +151,14 @@ class SpreadsheetGrid(UIElement):
             selRow -= drow
             selCol -= dcol
             if 0 <= selRow < self.numRows and 0 <= selCol < self.numCols:
+                # deselect the "old version" of this cell
+                self.selectedCells[i].deselect()
+                # select the "new version"
                 self.selectedCells[i] = self.getChild(f'{selRow},{selCol}')
                 self.selectedCells[i].select(silent=True)
                 i += 1
             else:
+                self.selectedCells[i].deselect()
                 self.selectedCells.pop(i)
 
     def getWidth(self):
