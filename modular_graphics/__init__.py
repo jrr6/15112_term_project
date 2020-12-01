@@ -19,9 +19,13 @@ class RelativeCanvas(object):
                                      x1 + self.x, y1 + self.y, **kwargs)
 
     def createText(self, x, y, **kwargs):
-        if not 'font' in kwargs:
+        if 'font' not in kwargs:
             kwargs['font'] = '"Andale Mono" 12'
         self.canvas.create_text(x + self.x, y + self.y, **kwargs)
+
+    def createLine(self, x0, y0, x1, y1, **kwargs):
+        self.canvas.create_line(x0 + self.x, y0 + self.y, x1 + self.x,
+                                y1 + self.y, **kwargs)
 
 
 class UIElement(ABC):
