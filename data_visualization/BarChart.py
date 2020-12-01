@@ -20,17 +20,17 @@ class BarChart(UIElement):
             + self.kKeyTextWidth
 
         # label constants
-        self.kSideLabelMargin = 2
+        self.kEdgeLabelMargin = 2
 
         # graph constants
         self.kGraphTopY = 50
         self.kGraphWidth = 500
         self.kGraphHeight = 400
         self.kGraphBotY = self.kGraphTopY + self.kGraphHeight
-        self.kLabelsWidth = 20
+        self.kSideLabelsWidth = 30
         self.kIntraGroupMargin = 2
         self.kInterGroupMargin = 10
-        self.kGraphStartX = self.kLabelsWidth + self.kSideMargin + 5  # margin
+        self.kGraphStartX = self.kSideLabelsWidth + self.kSideMargin
 
         if 'data' not in props or not isinstance(self.props['data'], ChartData):
             raise Exception('Invalid or missing data passed to BarChart.')
@@ -58,6 +58,7 @@ class BarChart(UIElement):
             canvas.createRectangle(curKeyX, self.kKeyY,
                                    curKeyX + self.kKeyBlockSize,
                                    self.kKeyY + self.kKeyBlockSize,
+                                   width=0,  # hide border
                                    fill=depSeries.color)
             textX = curKeyX + self.kKeyBlockSize + self.kKeyPadding
             textYFudgeFactor = -1
@@ -65,12 +66,22 @@ class BarChart(UIElement):
                               text=depSeries.title, anchor='nw')
             curKeyX += self.kKeyItemWidth
 
-        # side labels
+        # I'm not sure we want a y-axis, but in case we ever do, here it is:
+        # y axis
+        # canvas.createLine(self.kGraphStartX, self.kGraphBotY,
+        #                   self.kGraphStartX,
+        #                   self.kGraphBotY - self.kGraphHeight,
+        #                   fill='black')
+
+        # side labels and gridlines
         for i in range(5):
-            canvas.createText(self.kGraphStartX - self.kSideLabelMargin,
-                              self.kGraphBotY - i * self.kGraphHeight / 4,
-                              text=str((i / 4) * chartData.yMax),
-                              anchor='e')
+            lineX = self.kGraphStartX
+            textX = lineX - self.kEdgeLabelMargin
+            y = self.kGraphBotY - i * self.kGraphHeight / 4
+            axisLabel = str((i / 4) * chartData.yMax)
+            canvas.createText(textX, y, text=axisLabel, anchor='e')
+            canvas.createLine(lineX, y, lineX + self.kGraphWidth, y,
+                              fill='black' if i == 0 else 'gray')
 
         # SAVE THIS FOR LATER -- for now, we get the bounds fed to us :)
         # maxVal = max([val.getValue() if isinstance(val, CellRef) else val
@@ -79,8 +90,10 @@ class BarChart(UIElement):
 
         # labels
         indData = chartData.independentSeries.data
-        curX = self.kGraphStartX
-        indVarBucketWidth = self.kGraphWidth / len(indData)
+        # give the first column intergroup margin-worth of padding
+        curX = self.kGraphStartX + self.kInterGroupMargin
+        indVarBucketWidth = ((self.kGraphWidth - self.kInterGroupMargin)
+                             / len(indData))
         for i in range(len(indData)):
             # draw columns
             columnWidth = ((indVarBucketWidth - self.kInterGroupMargin)
@@ -94,7 +107,8 @@ class BarChart(UIElement):
 
                 canvas.createRectangle(startX, self.kGraphBotY, endX,
                                        self.kGraphBotY - colHeight,
-                                       fill=depSeries.color)
+                                       fill=depSeries.color,
+                                       width=0)
 
             # category label
             if isinstance(indData[i], CellRef):
@@ -102,7 +116,7 @@ class BarChart(UIElement):
             else:
                 text = str(indData[i])
             canvas.createText(curX + indVarBucketWidth / 2,
-                              self.kGraphBotY,
+                              self.kGraphBotY + self.kEdgeLabelMargin,
                               text=text, anchor='n')
             curX += indVarBucketWidth
 
@@ -110,4 +124,5 @@ class BarChart(UIElement):
         return self.kGraphStartX + self.kGraphWidth + self.kSideMargin
 
     def getHeight(self):
-        return self.kGraphBotY + self.kBottomMargin * 2  # room for labels
+        textHeight = 15  # approximation of bottom label height
+        return self.kGraphBotY + textHeight + self.kBottomMargin
