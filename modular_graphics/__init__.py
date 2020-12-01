@@ -19,6 +19,8 @@ class RelativeCanvas(object):
                                      x1 + self.x, y1 + self.y, **kwargs)
 
     def createText(self, x, y, **kwargs):
+        if not 'font' in kwargs:
+            kwargs['font'] = '"Andale Mono" 12'
         self.canvas.create_text(x + self.x, y + self.y, **kwargs)
 
 
