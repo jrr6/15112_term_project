@@ -166,6 +166,9 @@ class UICell(UIElement):
     def setText(self, text):
         self.text = str(text)
         self._renderText(self.active)
+        # Our text has changed -- notify!
+        if 'onChange' in self.props:
+            self.props['onChange'](self)
 
     # Sets the output text for a text field containing a formula
     def setOutputText(self, formulaOutput):
