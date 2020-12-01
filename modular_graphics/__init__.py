@@ -119,17 +119,15 @@ class App(CMUApp, UIElement):
     def mousePressed(self, event):
         App._addEventMetadata(event)
 
-        if self.modalMode:
-            self.processMouseEvent(self.getChild('modal'), event)
-            return
-
         childIdx = len(self.children) - 1
         while childIdx >= 0:
             curChild = self.children[childIdx]
-            self.processMouseEvent(curChild, event)
+            if self.processMouseEvent(curChild, event):
+                break
             childIdx -= 1
 
     def processMouseEvent(self, element: UIElement, event):
+        inBounds = False
         propagateToChildren = True
         if (element.x <= event.x <= element.x + element.getWidth()
                 and element.y <= event.y <= element.y + element.getHeight()):
@@ -148,10 +146,13 @@ class App(CMUApp, UIElement):
             element.onClick(event)
             event.x = oldX
             event.y = oldY
+            inBounds = True
 
         if propagateToChildren:
             for child in element.children:
                 self.processMouseEvent(child, event)
+
+        return inBounds
 
     def keyPressed(self, event):
         if self.modalMode:
