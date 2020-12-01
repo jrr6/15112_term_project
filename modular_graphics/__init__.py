@@ -105,7 +105,6 @@ class App(CMUApp, UIElement):
         UIElement.__init__(self, 'root', 0, 0, {})
         self.width = scene.getWidth()
         self.height = scene.getHeight()
-        self.modalMode = False
         # IMPORTANT: set autorun to false or init will never finish!
         CMUApp.__init__(self, width=self.width, height=self.height,
                         autorun=False)
@@ -155,10 +154,6 @@ class App(CMUApp, UIElement):
         return inBounds
 
     def keyPressed(self, event):
-        if self.modalMode:
-            # TODO: Figure out key listeners in modal mode!
-            pass
-
         App._addEventMetadata(event)
         i = 0
         called = set()
@@ -190,14 +185,12 @@ class App(CMUApp, UIElement):
     # is dismissed
     def runModal(self, view):
         from modular_graphics.modal import Modal
-        if not self.modalMode:
-            self.modalMode = True
+        if not self.hasChild('modal'):
             self.appendChild(Modal('modal', (self.width - view.getWidth()) // 2,
                                    50, view=view, onDismiss=self._dismissModal))
 
     def _dismissModal(self):
         self.removeChild('modal')
-        self.modalMode = False
 
     @staticmethod
     def _addEventMetadata(event):

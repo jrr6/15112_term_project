@@ -298,12 +298,18 @@ class SpreadsheetGrid(UIElement):
             if len(self.selectedCells) == 0:
                 return
 
-            importer = WebImporter(onImport=self.importWebTable)
+            target = self.selectedCells[0]
+            # TODO: Is there a better way?
+            # deselect everything to ensure we don't catch modal keystrokes
+            self.deselectAllCellsButSender(None)
+            importer = WebImporter(
+                onImport=lambda table, target=target:
+                self.importWebTable(table, target))
             self.runModal(importer)
 
-    def importWebTable(self, table: Table):
+    def importWebTable(self, table: Table, targetCell):
         numLetteredCols = 26
-        selRow, selCol = self.absRowColFromCellName(self.selectedCells[0].name)
+        selRow, selCol = self.absRowColFromCellName(targetCell.name)
         if selCol + table.longestRowLength >= numLetteredCols:
             return False
 
