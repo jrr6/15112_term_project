@@ -57,7 +57,7 @@ class BarChart(GenericChart):
             curX += indVarBucketWidth
 
     def getWidth(self):
-        return self.kGraphStartX + self.kGraphWidth + self.kSideMargin
+        return self.getLabeledChartWidth()
 
     def getHeight(self):
-        return self.kGraphBotY + self.kBottomLabelsHeight + self.kBottomMargin
+        return self.getLabeledChartHeight()

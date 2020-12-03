@@ -4,6 +4,7 @@
 # Main code file -- contains top-level UI for spreadsheet app
 from data_visualization import BarChart, PieChart, ChartData, Series, ChartType, \
     ScatterChart
+from data_visualization.LineChart import LineChart
 from modular_graphics import UIElement, App
 from ui_components import SpreadsheetGrid
 
@@ -30,13 +31,13 @@ class Scene(UIElement):
         #                    Series('Banana', [9, 50], color='yellow')],
         #                   None, None, None, 60)
 
-        chart = ChartData(ChartType.SCATTER, 'Points in Space!',
+        chart = ChartData(ChartType.LINE, 'Points in Space!',
                           Series('Time', [0, 5, 20, 10]),
                           [
                               Series('Eagle', [1, 3, 7, 4], 'green'),
                               Series('Falcon', [10, 5, 1, 2], 'red')
                           ], 0, 20, 0, 10)
-        self.appendChild(ScatterChart('test', 5, 5, data=chart))
+        self.appendChild(LineChart('test', 5, 5, data=chart))
 
     def getWidth(self):
         return self.width
