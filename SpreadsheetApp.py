@@ -2,7 +2,7 @@
 # Joseph Rotella (jrotella, F0)
 #
 # Main code file -- contains top-level UI for spreadsheet app
-from data_visualization import BarChart, ChartData, Series, ChartType
+from data_visualization import BarChart, PieChart, ChartData, Series, ChartType
 from modular_graphics import UIElement, App
 from ui_components import SpreadsheetGrid
 
@@ -14,14 +14,20 @@ class Scene(UIElement):
 
     def initChildren(self):
         # self.appendChild(SpreadsheetGrid('grid', 5, 5))
-        chart = ChartData(ChartType.BAR, 'My Cool Chart',
-                          Series('Attribute', ['Corporateness', 'Mundanity',
-                                             'Use of Jargon']),
-                          [Series('Widget 1', [9, 6, 10], color='red'),
-                           Series('Widget 2', [8, 6, 7], color='yellow'),
-                           Series('Widget 3', [1, 7, 3], color='blue')],
-                          None, None, None, 10)
-        self.appendChild(BarChart('test', 5, 5, data=chart))
+        # chart = ChartData(ChartType.BAR, 'My Cool Chart',
+        #                   Series('Attribute', ['Corporateness', 'Mundanity',
+        #                                      'Use of Jargon']),
+        #                   [Series('Widget 1', [9, 6, 10], color='red'),
+        #                    Series('Widget 2', [8, 6, 7], color='yellow'),
+        #                    Series('Widget 3', [1, 7, 3], color='blue')],
+        #                   None, None, None, 10)
+        chart = ChartData(ChartType.PIE, '100%',
+                          Series('Trait', ['Popularity', 'Smoothness']),
+                          [Series('Apple', [7, 50], color='green'),
+                           Series('Pumpkin', [5, 50], color='orange'),
+                           Series('Banana', [9, 50], color='yellow')],
+                          None, None, None, 60)
+        self.appendChild(PieChart('test', 5, 5, data=chart))
 
     def getWidth(self):
         return self.width

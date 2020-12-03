@@ -27,6 +27,13 @@ class RelativeCanvas(object):
         self.canvas.create_line(x0 + self.x, y0 + self.y, x1 + self.x,
                                 y1 + self.y, **kwargs)
 
+    def createOval(self, x0, y0, x1, y1, **kwargs):
+        self.canvas.create_oval(x0, y0, x1, y1, **kwargs)
+
+    def createArc(self, x0, y0, x1, y1, **kwargs):
+        self.canvas.create_arc(x0 + self.x, y0 + self.y, x1 + self.x,
+                               y1 + self.y, **kwargs)
+
 
 class UIElement(ABC):
     def __init__(self, name, x, y, props):
