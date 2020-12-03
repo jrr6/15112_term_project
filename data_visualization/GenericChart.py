@@ -7,7 +7,7 @@ class GenericChart(UIElement):
         super().__init__(name, x, y, props)
 
         self.kTitleFont = '"Andale Mono" 14'
-        self.kSideMargin = 10
+        self.kSideMargin = 15
         self.kTopMargin = 5
         self.kBottomMargin = 10
 
@@ -23,11 +23,13 @@ class GenericChart(UIElement):
         self.kEdgeLabelMargin = 2
 
         # graph constants
+        self.kSideLabelsWidth = 30
         self.kGraphStartX = self.kSideMargin
         self.kGraphTopY = 50
         self.kGraphWidth = 500
         self.kGraphHeight = 400
         self.kGraphBotY = self.kGraphTopY + self.kGraphHeight
+        self.kBottomLabelsHeight = 15
 
         if 'data' not in props or not isinstance(self.props['data'], ChartData):
             raise Exception('Invalid or missing data passed to chart.')
@@ -62,3 +64,31 @@ class GenericChart(UIElement):
                               text=depSeries.title, anchor='nw')
             curKeyX += self.kKeyItemWidth
 
+    def drawSideLabels(self, canvas, yMinOverride=None, yMaxOverride=None):
+        yMin = yMinOverride if yMinOverride is not None \
+            else self.props['data'].yMin
+        yMax = yMaxOverride if yMaxOverride is not None \
+            else self.props['data'].yMax
+
+        for i in range(5):
+            axisLabel = str(yMin + (i / 4) * (yMax - yMin))
+
+            lineX = self.kGraphStartX
+            textX = lineX - self.kEdgeLabelMargin
+            y = self.kGraphBotY - i * self.kGraphHeight / 4
+            canvas.createText(textX, y, text=axisLabel, anchor='e')
+            canvas.createLine(lineX, y, lineX + self.kGraphWidth, y,
+                              fill='black' if i == 0 else 'gray')
+
+    def drawBottomLabels(self, canvas):
+        xMin = self.props['data'].xMin
+        xMax = self.props['data'].xMax
+        for i in range(5):
+            axisLabel = str(xMin + (i / 4) * (xMax - xMin))
+
+            lineY = self.kGraphBotY
+            textY = lineY + self.kEdgeLabelMargin
+            x = self.kGraphStartX + i * self.kGraphWidth / 4
+            canvas.createText(x, textY, text=axisLabel, anchor='n')
+            canvas.createLine(x, lineY, x, lineY - self.kGraphHeight,
+                              fill='black' if i == 0 else 'gray')

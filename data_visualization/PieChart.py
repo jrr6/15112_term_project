@@ -1,5 +1,5 @@
 from data_visualization.GenericChart import GenericChart
-from modular_graphics import UIElement, RelativeCanvas
+from modular_graphics import RelativeCanvas
 import math
 
 class PieChart(GenericChart):

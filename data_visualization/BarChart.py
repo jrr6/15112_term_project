@@ -10,7 +10,6 @@ class BarChart(GenericChart):
         self.kEdgeLabelMargin = 2
 
         # graph constants
-        self.kSideLabelsWidth = 30
         self.kIntraGroupMargin = 2
         self.kInterGroupMargin = 10
         self.kGraphStartX += self.kSideLabelsWidth  # since we have text
@@ -19,23 +18,7 @@ class BarChart(GenericChart):
         chartData: ChartData = self.props['data']
         self.drawBGAndTitle(canvas)
         self.drawKey(canvas)
-
-        # I'm not sure we want a y-axis, but in case we ever do, here it is:
-        # y axis
-        # canvas.createLine(self.kGraphStartX, self.kGraphBotY,
-        #                   self.kGraphStartX,
-        #                   self.kGraphBotY - self.kGraphHeight,
-        #                   fill='black')
-
-        # side labels and gridlines
-        for i in range(5):
-            lineX = self.kGraphStartX
-            textX = lineX - self.kEdgeLabelMargin
-            y = self.kGraphBotY - i * self.kGraphHeight / 4
-            axisLabel = str((i / 4) * chartData.yMax)
-            canvas.createText(textX, y, text=axisLabel, anchor='e')
-            canvas.createLine(lineX, y, lineX + self.kGraphWidth, y,
-                              fill='black' if i == 0 else 'gray')
+        self.drawSideLabels(canvas, yMinOverride=0)
 
         # TODO: SAVE THIS FOR LATER -- for now, we get the bounds fed to us :)
         # maxVal = max([val.getValue() if isinstance(val, CellRef) else val
@@ -43,12 +26,12 @@ class BarChart(GenericChart):
         #               for val in series.data])
 
         # labels
-        indData = chartData.independentSeries._data
+        indDataLen = chartData.independentSeries.dataLength()
         # give the first column intergroup margin-worth of padding
         curX = self.kGraphStartX + self.kInterGroupMargin
         indVarBucketWidth = ((self.kGraphWidth - self.kInterGroupMargin)
-                             / len(indData))
-        for i in range(len(indData)):
+                             / indDataLen)
+        for i in range(indDataLen):
             # draw columns
             columnWidth = ((indVarBucketWidth - self.kInterGroupMargin)
                            / len(chartData.dependentSeries))
@@ -77,5 +60,4 @@ class BarChart(GenericChart):
         return self.kGraphStartX + self.kGraphWidth + self.kSideMargin
 
     def getHeight(self):
-        textHeight = 15  # approximation of bottom label height
-        return self.kGraphBotY + textHeight + self.kBottomMargin
+        return self.kGraphBotY + self.kBottomLabelsHeight + self.kBottomMargin
