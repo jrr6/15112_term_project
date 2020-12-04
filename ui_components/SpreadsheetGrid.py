@@ -225,7 +225,7 @@ class SpreadsheetGrid(UIElement):
                 self.highlighted.append(child)
 
     def setSelectedCells(self, sender, modifier):
-        if self.activeCell:
+        if self.activeCell and self.activeCell is not sender:
             self.activeCell.finishEditing()
 
         if (modifier is not None) and (len(self.selectedCells) > 0):

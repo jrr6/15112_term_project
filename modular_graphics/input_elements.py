@@ -2,10 +2,30 @@
 # Joseph Rotella (jrotella, F0)
 #
 # Contains UI elements for user interaction.
+
 import string
+import time
 
 from modular_graphics import UIElement
 from modular_graphics.atomic_elements import Rectangle, Text
+
+class DoubleClickable(object):
+    def __init__(self, *args):
+        super().__init__(*args)  # play nice with UIElement
+        self.doubleClickStart = 0
+        self.kDoubleClickDelay = 0.75  # ms
+
+    def isDoubleClick(self):
+        now = time.time()
+        if now < self.doubleClickStart + self.kDoubleClickDelay:
+            self.doubleClickStart = 0
+            return True
+        else:
+            self.doubleClickStart = now
+            return False
+
+    def resetDoubleClick(self):
+        self.doubleClickStart = 0
 
 # TODO: Need to make UICell a subclass to avoid redundant code
 class TextField(UIElement):

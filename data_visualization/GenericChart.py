@@ -1,8 +1,9 @@
 from data_visualization.ChartData import ChartData
 from modular_graphics import UIElement
+from modular_graphics.input_elements import DoubleClickable
 
 
-class GenericChart(UIElement):
+class GenericChart(DoubleClickable, UIElement):
     def __init__(self, name, x, y, props):
         super().__init__(name, x, y, props)
 

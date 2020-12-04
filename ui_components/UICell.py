@@ -5,19 +5,19 @@
 # with the data model Cell class).
 
 import string
-import time
 
 from modular_graphics.atomic_elements import Rectangle, Text
 from modular_graphics import UIElement
+from modular_graphics.input_elements import DoubleClickable
 
-class UICell(UIElement):
+
+class UICell(DoubleClickable, UIElement):
     def __init__(self, name, x, y, **props):
         super().__init__(name, x, y, props)
+
         # Constants
         self.paddingX = 10
         self.paddingY = 5
-        self.doubleClickStart = 0
-        self.kDoubleClickDelay = 0.75  # ms
 
         # State
         self.active = False
@@ -52,10 +52,9 @@ class UICell(UIElement):
         self._renderText(False)
 
     def onClick(self, event):
-        now = time.time()
         if (self.props.get('editable', True)
                 and not self.active
-                and now < self.doubleClickStart + self.kDoubleClickDelay):
+                and self.isDoubleClick()):
             self.activate()
         else:
             if event.shiftDown:
@@ -65,7 +64,6 @@ class UICell(UIElement):
             else:
                 modifier = None
             self.select(modifier=modifier)
-            self.doubleClickStart = now
 
     def select(self, silent=False, modifier=None):
         print('select', self.name)
@@ -95,7 +93,7 @@ class UICell(UIElement):
     def deselect(self, silent=False):
         print('deselect', self.name)
         self.selected = False
-        self.doubleClickStart = 0  # don't jump to activation if clicked again
+        self.resetDoubleClick()  # don't jump to activation if clicked again
         self.resignKeyListener()
         self.getChild('border').props['borderColor'] = 'black'
         self.getChild('border').props['borderWidth'] = 1
