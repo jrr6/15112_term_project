@@ -8,10 +8,14 @@ from typing import Union
 
 
 class Series:
-    def __init__(self, title: str, data: list, color: Union[str, None]=None):
-        self.title = title
+    def __init__(self, titleRef, data: list, color: Union[str, None]=None):
+        self._titleRef = titleRef
         self._data = data  # callers should just use `evaluated` methods
         self.color = color  # only required for dependent series
+
+    @property
+    def title(self):
+        return self._titleRef.getValue()
 
     def dataLength(self):
         return len(self._data)

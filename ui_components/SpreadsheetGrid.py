@@ -399,10 +399,10 @@ class SpreadsheetGrid(UIElement):
         depSeries = []
         titles = []
         for i in range(len(cols)):
-            title = colRefs[cols[i]][0].getValue()
+            title = colRefs[cols[i]][0]
             data = colRefs[cols[i]][1:]
             series = Series(title, data)
-            titles.append(title)
+            titles.append(title.getValue())
             if i == 0:
                 indSeries = series
             else:

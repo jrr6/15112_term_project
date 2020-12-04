@@ -167,7 +167,7 @@ class GenericChart(UIElement):
                                           xPos + self.kDotRadius,
                                           yPos + self.kDotRadius,
                                           outline='',
-                                          fill=depSeries[i].color)
+                                          fill=curSeries.color)
 
     @staticmethod
     def enumeratedSort(lst):
@@ -188,7 +188,7 @@ class GenericChart(UIElement):
         indData = chartData.independentSeries.evaluatedData()
         xMin = chartData.xMin if chartData.xMin is not None else min(indData)
         xMax = chartData.xMax if chartData.xMax is not None else max(indData)
-        return xMin, xMax
+        return self.ensureNonequalLimits(xMin, xMax)
 
     def getYLimits(self):
         chartData = self.props['data']
@@ -198,7 +198,7 @@ class GenericChart(UIElement):
         yMax = chartData.yMax
 
         if not autoMin and not autoMax:
-            return yMin, yMax
+            return self.ensureNonequalLimits(yMin, yMax)
 
         for series in chartData.dependentSeries:
             data = series.evaluatedData()
@@ -209,4 +209,9 @@ class GenericChart(UIElement):
             if autoMax and (yMax is None or curMax > yMax):
                 yMax = curMax
 
-        return yMin, yMax
+        return self.ensureNonequalLimits(yMin, yMax)
+
+    def ensureNonequalLimits(self, lo, hi):
+        if lo == hi:
+            return lo, hi + 1
+        return lo, hi
