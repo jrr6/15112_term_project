@@ -131,10 +131,12 @@ class App(CMUApp, UIElement):
 
     def mousePressed(self, event):
         App._addEventMetadata(event)
+        self.sendMouseEventToChildren(self, event)
 
-        childIdx = len(self.children) - 1
+    def sendMouseEventToChildren(self, element: UIElement, event):
+        childIdx = len(element.children) - 1
         while childIdx >= 0:
-            curChild = self.children[childIdx]
+            curChild = element.children[childIdx]
             if self.processMouseEvent(curChild, event):
                 break
             childIdx -= 1
@@ -162,8 +164,9 @@ class App(CMUApp, UIElement):
             inBounds = True
 
         if propagateToChildren:
-            for child in element.children:
-                self.processMouseEvent(child, event)
+            # we need to go through CHILDREN frontmost-to-backmost as well
+            # so that frontmost callers can block
+            self.sendMouseEventToChildren(element, event)
 
         return inBounds
 

@@ -150,7 +150,7 @@ class GenericChart(UIElement):
 
                 if linear:
                     # TODO: If the out-of-bounds is in the middle of data,
-                    #       try to project the correct slope
+                    #       try to draw partial line segment with correct slope
                     if (prevX, prevY) != (None, None):
                         canvas.createLine(prevX, prevY, xPos, yPos,
                                           fill=curSeries.color)
@@ -209,8 +209,9 @@ class GenericChart(UIElement):
             if autoMax and (yMax is None or curMax > yMax):
                 yMax = curMax
 
-        return self.ensureNonequalLimits(yMin, yMax)
+        return GenericChart.ensureNonequalLimits(yMin, yMax)
 
+    @staticmethod
     def ensureNonequalLimits(self, lo, hi):
         if lo == hi:
             return lo, hi + 1
