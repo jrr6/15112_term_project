@@ -44,11 +44,12 @@ class ChartType(Enum):
     PIE = 3
 
 class ChartData:
-    def __init__(self, chartType: ChartType, title: str,
+    def __init__(self, ident: int, chartType: ChartType, title: str,
                  independentSeries: Series, dependentSeries: list[Series],
                  xMin: Union[float, None], xMax: Union[float, None],
                  yMin: Union[float, None], yMax: Union[float, None],
                  row: int, col: int, autocolor=False):
+        self.ident = ident
         self.chartType = chartType
         self.title = title
         self.independentSeries = independentSeries

@@ -68,8 +68,8 @@ class SpreadsheetGrid(UIElement):
                 self.appendChild(tf)
 
         # rerender charts
-        for chart in self.charts:
-            self.appendChartChild(chart)
+        for i in range(len(self.charts)):
+            self.appendChartChild(self.charts[i], i)
 
         # cover the corner
         self.appendChild(Rectangle('hider', 0, 0, width=self.siderWidth,
@@ -402,7 +402,7 @@ class SpreadsheetGrid(UIElement):
             title = colRefs[cols[i]][0]
             data = colRefs[cols[i]][1:]
             series = Series(title, data)
-            titles.append(title.getValue())
+            titles.append(str(title.getValue()))
             if i == 0:
                 indSeries = series
             else:
@@ -417,15 +417,21 @@ class SpreadsheetGrid(UIElement):
         else:
             defaultTitle = ', '.join(titles[:-1]) + f', and {titles[-1]}'
 
-        data = ChartData(type, defaultTitle, indSeries, depSeries,
+        if len(self.charts) > 0:
+            ident = self.charts[-1].ident + 1
+        else:
+            ident = 0
+        data = ChartData(ident, type, defaultTitle, indSeries, depSeries,
                          None, None, None, None,
                          self.curTopRow, self.curLeftCol, autocolor=True)
         self.addChart(data)
 
+    # adds a chart to our app state and then appends it to the view
     def addChart(self, chartData):
         self.charts.append(chartData)
         self.appendChartChild(chartData)
 
+    # appends a chart to the view based on chart data
     def appendChartChild(self, chartData):
         # TODO: Don't draw wildly off-screen charts
         x = ((chartData.col - self.curLeftCol) * self.colWidth)\
@@ -439,9 +445,21 @@ class SpreadsheetGrid(UIElement):
             ChartType.BAR: BarChart
         }
         self.appendChild(chartTypeMap[chartData.chartType](
-            f'chart{len(self.charts)}',
-            x, y, data=chartData
+            f'chart{chartData.ident}',
+            x, y, data=chartData,
+            onDelete=lambda ident=chartData.ident: self.deleteChart(ident),
+            onConfigure=lambda: self.deselectAllCellsButSender(None)
         ))
+
+    def deleteChart(self, ident):
+        self.removeChild(f'chart{ident}')
+        i = 0
+        while i < len(self.charts):
+            if self.charts[i].ident == ident:
+                self.charts.pop(i)
+                return
+            i += 1
+
 
     # returns row and column for cell with given name.
     # if name doesn't represent a body cell (e.g., header/sider/preview),

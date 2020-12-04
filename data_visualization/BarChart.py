@@ -20,11 +20,6 @@ class BarChart(GenericChart):
         self.drawKey(canvas)
         self.drawSideLabels(canvas, yMinOverride=0)
 
-        # TODO: SAVE THIS FOR LATER -- for now, we get the bounds fed to us :)
-        # maxVal = max([val.getValue() if isinstance(val, CellRef) else val
-        #               for series in chartData.dependentSeries
-        #               for val in series.data])
-
         # labels
         indDataLen = chartData.independentSeries.dataLength()
         # give the first column intergroup margin-worth of padding

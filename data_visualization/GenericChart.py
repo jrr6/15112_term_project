@@ -35,6 +35,8 @@ class GenericChart(DoubleClickable, UIElement):
 
         if 'data' not in props or not isinstance(self.props['data'], ChartData):
             raise Exception('Invalid or missing data passed to chart.')
+        if 'onDelete' not in props:
+            raise Exception('Missing delete handler for chart')
 
     # Subclasses should use this method to draw so we can safely fail
     def drawChart(self, canvas):
@@ -81,7 +83,7 @@ class GenericChart(DoubleClickable, UIElement):
     def drawSideLabels(self, canvas, yMinOverride=None, yMaxOverride=None):
         yMin, yMax = self.getYLimits()
         if yMinOverride is not None:
-            yMin = yMaxOverride
+            yMin = yMinOverride
         if yMaxOverride is not None:
             yMax = yMaxOverride
 
@@ -213,7 +215,16 @@ class GenericChart(DoubleClickable, UIElement):
         return GenericChart.ensureNonequalLimits(yMin, yMax)
 
     @staticmethod
-    def ensureNonequalLimits(self, lo, hi):
+    def ensureNonequalLimits(lo, hi):
         if lo == hi:
             return lo, hi + 1
         return lo, hi
+
+    def onClick(self, event):
+        from ui_components.ChartConfiguration import ChartConfiguration
+        if self.isDoubleClick():
+            if 'onConfigure' in self.props:
+                self.props['onConfigure']()
+            configurator = ChartConfiguration(data=self.props['data'],
+                                              onDelete=self.props['onDelete'])
+            self.runModal(configurator)
