@@ -6,8 +6,11 @@
 import string
 from enum import Enum
 
-from formulae import Cell
+from data_visualization import ChartType, Series, LineChart, ChartData, \
+    BarChart, PieChart, ScatterChart
+from formulae import Cell, CellRef
 from modular_graphics import UIElement
+from modular_graphics.atomic_elements import Rectangle
 from ui_components.UICell import UICell
 from ui_components.WebImporter import WebImporter, Table
 
@@ -31,28 +34,15 @@ class SpreadsheetGrid(UIElement):
         self.activeCell = None
         self.selectedCells = []
         self.highlighted = []
+        self.charts = []
 
     def initChildren(self):
-        for headerNum in range(self.numCols):
-            x = headerNum * self.colWidth + self.siderWidth  # skip over siders
-            label = chr(ord('A') + headerNum + self.curLeftCol)
-            self.appendChild(UICell(f'H{headerNum}', x, 0,
-                                    placeholder='', editable=False,
-                                    text=label, width=self.colWidth,
-                                    height=self.rowHeight, fill='lightgray',
-                                    align='center',
-                                    onSelect=self.setSelectedCells))
+        # Order to ensure correct overlapping:
+        # 1. Body cells
+        # 2. Charts (need to cover body cells but be covered by headers/siders)
+        # 3. Headers/siders & preview
 
-        for siderNum in range(self.numRows):
-            y = (1 + siderNum) * self.rowHeight  # don't label headers
-            label = siderNum + self.curTopRow + 1
-            self.appendChild(UICell(f'S{siderNum}', 0, y,
-                                    placeholder='', editable=False,
-                                    text=str(label),
-                                    width=self.siderWidth, fill='lightgray',
-                                    height=self.rowHeight, align='center',
-                                    onSelect=self.setSelectedCells))
-
+        # body cells
         for rowNum in range(self.numRows):
             for colNum in range(self.numCols):
                 x = colNum * self.colWidth + self.siderWidth  # skip siders
@@ -77,6 +67,37 @@ class SpreadsheetGrid(UIElement):
                             onDeselect=self.handleDeselection)
                 self.appendChild(tf)
 
+        # rerender charts
+        for chart in self.charts:
+            self.appendChartChild(chart)
+
+        # cover the corner
+        self.appendChild(Rectangle('hider', 0, 0, width=self.siderWidth,
+                                   height=self.rowHeight, fill='white',
+                                   borderColor=''))
+
+        # headers/siders
+        for headerNum in range(self.numCols):
+            x = headerNum * self.colWidth + self.siderWidth  # skip over siders
+            label = chr(ord('A') + headerNum + self.curLeftCol)
+            self.appendChild(UICell(f'H{headerNum}', x, 0,
+                                    placeholder='', editable=False,
+                                    text=label, width=self.colWidth,
+                                    height=self.rowHeight, fill='lightgray',
+                                    align='center',
+                                    onSelect=self.setSelectedCells))
+
+        for siderNum in range(self.numRows):
+            y = (1 + siderNum) * self.rowHeight  # don't label headers
+            label = siderNum + self.curTopRow + 1
+            self.appendChild(UICell(f'S{siderNum}', 0, y,
+                                    placeholder='', editable=False,
+                                    text=str(label),
+                                    width=self.siderWidth, fill='lightgray',
+                                    height=self.rowHeight, align='center',
+                                    onSelect=self.setSelectedCells))
+
+        # preview
         previewY = (1 + self.numRows) * self.rowHeight
         self.appendChild(UICell('preview', 0, previewY, placeholder='',
                                 width=self.getWidth(), height=self.rowHeight,
@@ -307,6 +328,15 @@ class SpreadsheetGrid(UIElement):
                 self.importWebTable(table, target))
             self.runModal(importer)
 
+        if event.key == 'l' and event.commandDown:
+            self.insertChart(ChartType.LINE)
+        elif event.key == 's' and event.commandDown:
+            self.insertChart(ChartType.SCATTER)
+        elif event.key == 'p' and event.commandDown:
+            self.insertChart(ChartType.PIE)
+        elif event.key == 'b' and event.commandDown:
+            self.insertChart(ChartType.BAR)
+
     def importWebTable(self, table: Table, targetCell):
         numLetteredCols = 26
         selRow, selCol = self.absRowColFromCellName(targetCell.name)
@@ -331,6 +361,87 @@ class SpreadsheetGrid(UIElement):
             curRow += 1
             curCol = selCol
         return True
+
+    def insertChart(self, type: ChartType):
+        # prepare refs for cells
+        colRefs = {}
+        for cell in self.selectedCells:
+            row, col = self.absRowColFromCellName(cell.name)
+            if col not in colRefs:
+                colRefs[col] = []
+
+            colRefs[col].append(CellRef(row, col))
+
+        # ensure cols are in order
+        for col in colRefs:
+            colRefs[col].sort(key=lambda x: x.row)
+
+        cols = sorted(colRefs.keys())
+
+        # TODO: Dynamically determine whether to include titles
+        # depTitles = False  # whether dependent series are labeled with titles
+        # upperLeftValue = colRefs[cols[0]][0].getValue()  # avoid recomputing
+        # if upperLeftValue.isdigit():
+        #     indTitle = ''
+        #     depTitles = False
+        # else:
+        #     indTitle = upperLeftValue
+        #     colRefs[cols[0]].pop(0)  # don't use the title in the series
+        #     depTitles = True
+        #
+        # if type == ChartType.PIE or type == ChartType.BAR:
+        #     nextPossibleHeader = colRefs[cols[1]][0].getValue()
+        #     # if the first dep col has no header, none of them does
+        #     if nextPossibleHeader.isdigit():
+        #         depTitles = True
+
+        indSeries = None
+        depSeries = []
+        titles = []
+        for i in range(len(cols)):
+            title = colRefs[cols[i]][0].getValue()
+            data = colRefs[cols[i]][1:]
+            series = Series(title, data)
+            titles.append(title)
+            if i == 0:
+                indSeries = series
+            else:
+                depSeries.append(series)
+
+        if len(titles) == 0:
+            defaultTitle = 'New Chart'
+        elif len(titles) == 1:
+            defaultTitle = titles[0]
+        elif len(titles) == 2:
+            defaultTitle = ' and '.join(titles)
+        else:
+            defaultTitle = ', '.join(titles[:-1]) + f', and {titles[-1]}'
+
+        data = ChartData(type, defaultTitle, indSeries, depSeries,
+                         None, None, None, None,
+                         self.curTopRow, self.curLeftCol, autocolor=True)
+        self.addChart(data)
+
+    def addChart(self, chartData):
+        self.charts.append(chartData)
+        self.appendChartChild(chartData)
+
+    def appendChartChild(self, chartData):
+        # TODO: Don't draw wildly off-screen charts
+        x = ((chartData.col - self.curLeftCol) * self.colWidth)\
+            + self.siderWidth
+        y = ((chartData.row - self.curTopRow) + 1) * self.rowHeight
+
+        chartTypeMap = {
+            ChartType.PIE: PieChart,
+            ChartType.LINE: LineChart,
+            ChartType.SCATTER: ScatterChart,
+            ChartType.BAR: BarChart
+        }
+        self.appendChild(chartTypeMap[chartData.chartType](
+            f'chart{len(self.charts)}',
+            x, y, data=chartData
+        ))
 
     # returns row and column for cell with given name.
     # if name doesn't represent a body cell (e.g., header/sider/preview),

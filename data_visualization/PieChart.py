@@ -1,5 +1,4 @@
 from data_visualization.GenericChart import GenericChart
-from modular_graphics import RelativeCanvas
 import math
 
 class PieChart(GenericChart):
@@ -8,7 +7,7 @@ class PieChart(GenericChart):
         self.kGraphWidth = self.kGraphHeight  # needs to be square!
         self.kMinPctLabel = 0.05
 
-    def draw(self, canvas: RelativeCanvas):
+    def drawChart(self, canvas):
         self.drawBGAndTitle(canvas)
         self.drawKey(canvas)
 

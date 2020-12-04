@@ -6,6 +6,7 @@ from data_visualization import BarChart, PieChart, ChartData, Series, ChartType,
     ScatterChart
 from data_visualization.LineChart import LineChart
 from modular_graphics import UIElement, App
+from modular_graphics.atomic_elements import Rectangle
 from ui_components import SpreadsheetGrid
 
 class Scene(UIElement):
@@ -15,7 +16,15 @@ class Scene(UIElement):
         super().__init__('scene', 0, 0, {})
 
     def initChildren(self):
-        # self.appendChild(SpreadsheetGrid('grid', 5, 5))
+        gridX = 5
+        gridY = 5
+        self.appendChild(SpreadsheetGrid('grid', gridX, gridY))
+        self.appendChild(Rectangle('side-hider', 0, 0,
+                                   width=gridX, height=self.height,
+                                   fill='white', borderColor=''))
+        self.appendChild(Rectangle('top-hider', 0, 0,
+                                   width=self.width, height=gridY,
+                                   fill='white', borderColor=''))
         # chart = ChartData(ChartType.BAR, 'My Cool Chart',
         #                   Series('Attribute', ['Corporateness', 'Mundanity',
         #                                      'Use of Jargon']),
@@ -31,13 +40,13 @@ class Scene(UIElement):
         #                    Series('Banana', [9, 50], color='yellow')],
         #                   None, None, None, 60)
 
-        chart = ChartData(ChartType.LINE, 'Points in Space!',
-                          Series('Time', [0, 5, 20, 10]),
-                          [
-                              Series('Eagle', [1, 3, 7, 4], 'green'),
-                              Series('Falcon', [10, 5, 1, 2], 'red')
-                          ], 0, 20, 0, 10)
-        self.appendChild(LineChart('test', 5, 5, data=chart))
+        # chart = ChartData(ChartType.LINE, 'Points in Space!',
+        #                   Series('Time', [0, 5, 20, 10]),
+        #                   [
+        #                       Series('Eagle', [1, 3, 7, 4], 'green'),
+        #                       Series('Falcon', [10, 5, 1, 2], 'red')
+        #                   ], 0, 20, 0, 10)
+        # self.appendChild(LineChart('test', 5, 5, data=chart))
 
     def getWidth(self):
         return self.width

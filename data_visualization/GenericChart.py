@@ -35,6 +35,18 @@ class GenericChart(UIElement):
         if 'data' not in props or not isinstance(self.props['data'], ChartData):
             raise Exception('Invalid or missing data passed to chart.')
 
+    # Subclasses should use this method to draw so we can safely fail
+    def drawChart(self, canvas):
+        pass
+
+    def draw(self, canvas):
+        try:
+            self.drawChart(canvas)
+        except:
+            self.drawBGAndTitle(canvas)  # cover up any partial drawing
+            canvas.createText(self.getWidth() / 2, self.getHeight() / 2,
+                              text='Data error', anchor='center')
+
     def drawBGAndTitle(self, canvas):
         canvas.createRectangle(0, 0, self.getWidth(), self.getHeight(),
                                fill='white')
@@ -66,10 +78,11 @@ class GenericChart(UIElement):
             curKeyX += self.kKeyItemWidth
 
     def drawSideLabels(self, canvas, yMinOverride=None, yMaxOverride=None):
-        yMin = yMinOverride if yMinOverride is not None \
-            else self.props['data'].yMin
-        yMax = yMaxOverride if yMaxOverride is not None \
-            else self.props['data'].yMax
+        yMin, yMax = self.getYLimits()
+        if yMinOverride is not None:
+            yMin = yMaxOverride
+        if yMaxOverride is not None:
+            yMax = yMaxOverride
 
         for i in range(5):
             axisLabel = str(yMin + (i / 4) * (yMax - yMin))
@@ -82,8 +95,7 @@ class GenericChart(UIElement):
                               fill='black' if i == 0 else 'gray')
 
     def drawBottomLabels(self, canvas):
-        xMin = self.props['data'].xMin
-        xMax = self.props['data'].xMax
+        xMin, xMax = self.getXLimits()
         for i in range(5):
             axisLabel = str(xMin + (i / 4) * (xMax - xMin))
 
@@ -108,6 +120,9 @@ class GenericChart(UIElement):
         indData = indSeries.evaluatedData()
         indexOrder, indData = GenericChart.enumeratedSort(indData)
 
+        xMin, xMax = self.getXLimits()
+        yMin, yMax = self.getYLimits()
+
         for curSeries in depSeries:
             prevX, prevY = None, None
             for i in range(len(indData)):
@@ -115,22 +130,20 @@ class GenericChart(UIElement):
                 depSeriesIdx = indexOrder[i]
                 depDatum = curSeries.evaluatedDatum(depSeriesIdx)
 
-                if indVal < chartData.xMin:
+                if indVal < xMin:
                     # we're still "before" the graph starts -- go to the next
                     continue
-                elif indVal > chartData.xMax:
+                elif indVal > xMax:
                     # we've gone off the graph -- we're done
                     break
 
-                outOfBounds = not chartData.yMin <= depDatum <= chartData.yMax
+                outOfBounds = not yMin <= depDatum <= yMax
 
-                xPct = ((indVal - chartData.xMin) /
-                        (chartData.xMax - chartData.xMin))
+                xPct = ((indVal - xMin) / (xMax - xMin))
                 if outOfBounds:
-                    yPct = 0 if depDatum < chartData.yMin else 1
+                    yPct = 0 if depDatum < yMin else 1
                 else:
-                    yPct = ((depDatum - chartData.yMin) /
-                            (chartData.yMax - chartData.yMin))
+                    yPct = ((depDatum - yMin) / (yMax - yMin))
 
                 xPos = self.kGraphStartX + xPct * self.kGraphWidth
                 yPos = self.kGraphBotY - yPct * self.kGraphHeight
@@ -169,3 +182,31 @@ class GenericChart(UIElement):
 
     def getLabeledChartWidth(self):
         return self.kGraphStartX + self.kGraphWidth + self.kSideMargin
+
+    def getXLimits(self):
+        chartData = self.props['data']
+        indData = chartData.independentSeries.evaluatedData()
+        xMin = chartData.xMin if chartData.xMin is not None else min(indData)
+        xMax = chartData.xMax if chartData.xMax is not None else max(indData)
+        return xMin, xMax
+
+    def getYLimits(self):
+        chartData = self.props['data']
+        autoMin = chartData.yMin is None
+        autoMax = chartData.yMax is None
+        yMin = chartData.yMin
+        yMax = chartData.yMax
+
+        if not autoMin and not autoMax:
+            return yMin, yMax
+
+        for series in chartData.dependentSeries:
+            data = series.evaluatedData()
+            curMin = min(data)
+            curMax = max(data)
+            if autoMin and (yMin is None or curMin < yMin):
+                yMin = curMin
+            if autoMax and (yMax is None or curMax > yMax):
+                yMax = curMax
+
+        return yMin, yMax

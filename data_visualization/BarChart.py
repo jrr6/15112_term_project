@@ -14,7 +14,7 @@ class BarChart(GenericChart):
         self.kInterGroupMargin = 10
         self.kGraphStartX += self.kSideLabelsWidth  # since we have text
 
-    def draw(self, canvas: RelativeCanvas):
+    def drawChart(self, canvas: RelativeCanvas):
         chartData: ChartData = self.props['data']
         self.drawBGAndTitle(canvas)
         self.drawKey(canvas)
@@ -40,8 +40,8 @@ class BarChart(GenericChart):
                 startX = curX + colIdx * columnWidth + self.kIntraGroupMargin
                 endX = startX + columnWidth - 2 * self.kIntraGroupMargin
                 # don't draw columns taller than 100% height
-                colHeightPct = min(depSeries.evaluatedDatum(i) / chartData.yMax,
-                                   1)
+                _, yMax = self.getYLimits()
+                colHeightPct = min(depSeries.evaluatedDatum(i) / yMax, 1)
                 colHeight = (colHeightPct * self.kGraphHeight)
 
                 canvas.createRectangle(startX, self.kGraphBotY, endX,

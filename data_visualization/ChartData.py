@@ -2,6 +2,7 @@
 # Joseph Rotella (jrotella, F0)
 #
 # Represents a chart model object.
+import random
 from enum import Enum
 from typing import Union
 
@@ -42,7 +43,8 @@ class ChartData:
     def __init__(self, chartType: ChartType, title: str,
                  independentSeries: Series, dependentSeries: list[Series],
                  xMin: Union[float, None], xMax: Union[float, None],
-                 yMin: Union[float, None], yMax: Union[float, None]):
+                 yMin: Union[float, None], yMax: Union[float, None],
+                 row: int, col: int, autocolor=False):
         self.chartType = chartType
         self.title = title
         self.independentSeries = independentSeries
@@ -51,4 +53,14 @@ class ChartData:
         self.xMax = xMax
         self.yMin = yMin
         self.yMax = yMax
+        self.row = row
+        self.col = col
+        if autocolor:
+            self.assignRandomColors()
 
+    def assignRandomColors(self):
+        colors = ['red', 'orange', 'yellow', 'blue', 'green', 'cyan', 'pink',
+                  'green yellow', 'midnight blue', 'purple', 'thistle']
+        for i in range(len(self.dependentSeries)):
+            self.dependentSeries[i].color = \
+                colors.pop(random.randint(0, len(colors) - 1))

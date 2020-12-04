@@ -10,7 +10,7 @@ class LineChart(GenericChart):
         super().__init__(name, x, y, props)
         self.kGraphStartX += self.kSideLabelsWidth  # since we have text
 
-    def draw(self, canvas):
+    def drawChart(self, canvas):
         self.drawBGAndTitle(canvas)
         self.drawKey(canvas)
         self.drawSideLabels(canvas)
