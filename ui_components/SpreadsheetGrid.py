@@ -69,7 +69,7 @@ class SpreadsheetGrid(UIElement):
 
         # rerender charts
         for i in range(len(self.charts)):
-            self.appendChartChild(self.charts[i], i)
+            self.appendChartChild(self.charts[i])
 
         # cover the corner
         self.appendChild(Rectangle('hider', 0, 0, width=self.siderWidth,
