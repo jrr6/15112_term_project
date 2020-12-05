@@ -20,7 +20,6 @@ class PieChart(GenericChart):
 
         arcPos = 90  # start at top
         for i in range(len(depSeries)):
-            print(seriesData[i])
             topLeft = (self.kGraphStartX,
                        self.kGraphTopY)
             botRight = (self.kGraphStartX + self.kGraphWidth,

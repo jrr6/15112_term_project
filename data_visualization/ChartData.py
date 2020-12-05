@@ -75,7 +75,7 @@ class ChartData:
                  independentSeries: Series, dependentSeries: list[Series],
                  xMin: Union[float, None], xMax: Union[float, None],
                  yMin: Union[float, None], yMax: Union[float, None],
-                 row: int, col: int, autocolor=False):
+                 row: float, col: float, autocolor=False):
         self.ident = ident
         self.chartType = chartType
         self.title = title
@@ -126,8 +126,8 @@ class ChartData:
         entities = splitEscapedString(data, '|')
         ident = entities[0]
         type = ChartType(int(entities[1]))
-        row = int(entities[2])
-        col = int(entities[3])
+        row = float(entities[2])
+        col = float(entities[3])
         xMin = int(entities[4]) if entities[4] != '' else None
         xMax = int(entities[5]) if entities[5] != '' else None
         yMin = int(entities[6]) if entities[6] != '' else None

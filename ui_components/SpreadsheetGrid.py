@@ -8,7 +8,7 @@ from enum import Enum
 
 from data_visualization import ChartType, Series, LineChart, ChartData, \
     BarChart, PieChart, ScatterChart
-from formulae import Cell, CellRef
+from formulae import Cell, CellRef, Formula, Operator
 from modular_graphics import UIElement
 from modular_graphics.atomic_elements import Rectangle
 from ui_components.UICell import UICell
@@ -72,16 +72,16 @@ class SpreadsheetGrid(UIElement):
         for i in range(len(self.charts)):
             self.appendChartChild(self.charts[i])
 
-        # cover the corner
-        self.appendChild(Rectangle('hider', 0, 0, width=self.siderWidth,
-                                   height=self.rowHeight, fill='white',
-                                   borderColor=''))
-
         # preview -- do this before headers/siders so it's easy to insert before
         previewY = (1 + self.numRows) * self.rowHeight
         self.appendChild(UICell('preview', 0, previewY, placeholder='',
                                 width=self.getWidth(), height=self.rowHeight,
                                 fill='white', editable=False, visibleChars=115))
+
+        # cover the corner
+        self.appendChild(Rectangle('hider', 0, 0, width=self.siderWidth,
+                                   height=self.rowHeight, fill='white',
+                                   borderColor=''))
 
         # headers/siders
         for headerNum in range(self.numCols):
@@ -263,6 +263,7 @@ class SpreadsheetGrid(UIElement):
 
     # Selects a "block" of cells (i.e., shift-select)
     def blockSelect(self, sender):
+        # TODO: don't crash on block-selecting headers/siders!
         pivotCell = self.selectedCells[0]
         self.deselectAllCellsButSender(sender, startIndex=1)
         self.selectedCells = [pivotCell]
@@ -299,8 +300,24 @@ class SpreadsheetGrid(UIElement):
                 self.selectedCells[0].name)
             preview.setText(Cell.getRaw(selectedRow, selectedCol))
         else:
-            # TODO: Show some useful stats or something...
-            preview.setText('Multiple cells selected')
+            selectedCellRefs = [CellRef(*self.absRowColFromCellName(cell.name))
+                                for cell in self.selectedCells]
+            summaryText = ''
+
+            count = Formula(Operator.get('COUNT'), selectedCellRefs)
+            sumVal = Formula(Operator.get('SUM'), selectedCellRefs)
+            mean = Formula(Operator.get('AVERAGE'), selectedCellRefs)
+            mode = Formula(Operator.get('MODE'), selectedCellRefs)
+            minVal = Formula(Operator.get('MIN'), selectedCellRefs)
+            maxVal = Formula(Operator.get('MAX'), selectedCellRefs)
+            for formula in [count, sumVal, mean, mode, minVal, maxVal]:
+                try:
+                    res = formula.evaluate()
+                    print(formula.operator.name, res)
+                    summaryText += formula.operator.name + '=' + str(res) + '   '
+                except:
+                    pass
+            preview.setText(summaryText[:-1])  # ignore trailing space
             pass
 
     def onKeypress(self, event):

@@ -94,6 +94,8 @@ class SpreadsheetScene(UIElement):
                                    self.writeFile(path, data)))
 
     def open(self):
+        grid = self.getChild('grid')
+        grid.deselectAllCellsButSender(None)  # hacky, but it works
         self.runModal(FileSelector(message='Open File',
                                    onSubmit=self.readFile))
 

@@ -21,7 +21,7 @@ class GenericChart(DoubleClickable, UIElement):
         self.kKeyY = 25
         self.kKeyBlockSize = 10
         self.kKeyPadding = 10
-        self.kKeyTextWidth = 100
+        self.kKeyTextWidth = 80
         self.kKeyItemWidth = self.kKeyBlockSize + self.kKeyPadding\
             + self.kKeyTextWidth
 

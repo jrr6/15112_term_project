@@ -26,7 +26,9 @@ class Operator(object):
                 try:
                     newOperands.append(int(operand.replace(',', '')))
                 except:
-                    newOperands.append(0)
+                    # TODO: should we "zeroify" or just skip?
+                    # newOperands.append(0)
+                    pass
         return newOperands
 
     def operate(self, operands):
@@ -44,7 +46,13 @@ class Operator(object):
 
 # OPERATOR FUNCTIONS
 def average(operands):
+    if operands == []: return 0
     return sum(operands) / len(operands)
+
+def safe(fn):
+    def safeFn(operands):
+        return fn(operands) if operands != [] else 0
+    return safeFn
 
 def mode(operands):
     if operands == []:
@@ -72,9 +80,13 @@ def mode(operands):
 # Utility operator for literal formulae
 Operator('LITERAL', lambda x: x[0], numerical=False)
 
+Operator('COUNT', lambda x: len(x), numerical=False)
+
 Operator('ADD', sum)
-Operator('AVERAGE', lambda x: sum(x) / len(x))
+Operator('AVERAGE', average)
 Operator('DIVIDE', lambda x: x[0] / math.prod(x[1:]))
+Operator('MIN', safe(min))
+Operator('MAX', safe(max))
 Operator('MODE', mode)
 Operator('MULTIPLY', math.prod)
 Operator('RAND', lambda x: random.random())  # TODO: Figure out how to stop this recomputing when scrolling!
