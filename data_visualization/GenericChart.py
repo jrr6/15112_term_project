@@ -38,10 +38,17 @@ class GenericChart(DoubleClickable, UIElement):
         self.kGraphBotY = self.kGraphTopY + self.kGraphHeight
         self.kBottomLabelHeight = 15
 
+        # drag tracking
+        self.kDragThreshold = 0.01
+        self.lastX = None
+        self.lastY = None
+
         if 'data' not in props or not isinstance(self.props['data'], ChartData):
             raise Exception('Invalid or missing data passed to chart.')
         if 'onDelete' not in props:
             raise Exception('Missing delete handler for chart')
+        if 'onMove' not in props:
+            raise Exception('Missing move handler for chart')
 
     # Subclasses should use this method to draw so we can safely fail
     def drawChart(self, canvas):
@@ -234,6 +241,8 @@ class GenericChart(DoubleClickable, UIElement):
         return lo, hi
 
     def onClick(self, event):
+        self.lastX = None
+        self.lastY = None
         from ui_components.ChartConfiguration import ChartConfiguration
         if self.isDoubleClick():
             if 'onConfigure' in self.props:
@@ -241,3 +250,24 @@ class GenericChart(DoubleClickable, UIElement):
             configurator = ChartConfiguration(data=self.props['data'],
                                               onDelete=self.props['onDelete'])
             self.runModal(configurator)
+
+    def onDrag(self, event):
+        from ui_components import SpreadsheetGrid
+        if (self.lastX, self.lastY) == (None, None):
+            self.lastX = event.x
+            self.lastY = event.y
+
+        drow = ((event.y - self.lastY) / SpreadsheetGrid.rowHeight)
+        dcol = ((event.x - self.lastX) / SpreadsheetGrid.colWidth)
+
+        newRow, newCol = None, None
+        curRow, curCol = self.props['data'].row, self.props['data'].col
+
+        if abs(drow) > self.kDragThreshold:
+            newRow = curRow + drow
+            self.lastX = event.x
+        if abs(dcol) > self.kDragThreshold:
+            newCol = curCol + dcol
+            self.lastY = event.y
+
+        self.props['onMove'](self, (newRow or curCol, newCol or curCol))

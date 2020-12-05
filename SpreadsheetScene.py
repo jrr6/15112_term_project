@@ -25,12 +25,22 @@ class SpreadsheetScene(UIElement):
         self.makeKeyListener()
         gridX = 5
         gridY = 5
-        self.appendChild(SpreadsheetGrid('grid', gridX, gridY))
-        self.appendChild(Rectangle('side-hider', 0, 0,
+        grid = SpreadsheetGrid('grid', gridX, gridY)
+        self.appendChild(grid)
+        self.appendChild(Rectangle('left-hider', 0, 0,
                                    width=gridX, height=self.height,
+                                   fill='white', borderColor=''))
+        self.appendChild(Rectangle('right-hider', gridX + grid.getWidth() + 1,
+                                   gridY, height=self.height,
+                                   width=self.width - grid.getWidth(),
                                    fill='white', borderColor=''))
         self.appendChild(Rectangle('top-hider', 0, 0,
                                    width=self.width, height=gridY,
+                                   fill='white', borderColor=''))
+        self.appendChild(Rectangle('bot-hider', gridX,
+                                   gridY + grid.getHeight() + 1,
+                                   width=self.width,
+                                   height=self.height - grid.getHeight(),
                                    fill='white', borderColor=''))
         # chart = ChartData(ChartType.BAR, 'My Cool Chart',
         #                   Series('Attribute', ['Corporateness', 'Mundanity',

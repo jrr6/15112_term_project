@@ -4,6 +4,7 @@
 # A framework atop 112 graphics that allows for modular UI elements with
 # independent states and event-driven design patterns.
 import copy
+from enum import Enum
 
 from cmu_112_graphics import App as CMUApp, WrappedCanvas
 from abc import ABC, abstractmethod
@@ -61,6 +62,19 @@ class UIElement(ABC):
         pass
 
     def appendChild(self, element):
+        self._setUpChild(element)
+        self.children.append(element)
+        self.childIds[element.name] = element
+
+    def appendBefore(self, element, otherElementId):
+        if otherElementId not in self.childIds:
+            self.appendChild(element)
+        else:
+            idx = self.children.index(self.childIds[otherElementId])
+            self.children.insert(idx, element)
+            self.childIds[element.name] = element
+
+    def _setUpChild(self, element):
         if element.name in self.childIds:
             raise Exception(f'Attempt to add child with duplicate ID '
                             f'{element.name}')
@@ -69,8 +83,6 @@ class UIElement(ABC):
         # We must init children AFTER changing the x,y
         # or the child won't get those changes
         element.initChildren()
-        self.children.append(element)
-        self.childIds[element.name] = element
 
     def hasChild(self, name):
         return name in self.childIds
@@ -91,6 +103,9 @@ class UIElement(ABC):
     def onClick(self, event):
         pass
 
+    def onDrag(self, event):
+        pass
+
     def onKeypress(self, event):
         pass
 
@@ -106,6 +121,10 @@ class UIElement(ABC):
 
     def runModal(self, modal):
         App.instance.runModal(modal)
+
+class EventType(Enum):
+    CLICK = 0
+    DRAG = 1
 
 class App(CMUApp, UIElement):
     instance = None
@@ -124,6 +143,7 @@ class App(CMUApp, UIElement):
                         autorun=False)
         self.appendChild(scene)
         self.curModalId = 0
+        self.dragStart = None
 
     @staticmethod
     def load(scene):
@@ -131,22 +151,33 @@ class App(CMUApp, UIElement):
         App.instance.run()
 
     def mousePressed(self, event):
+        self.dragStart = (event.x, event.y)
         App._addEventMetadata(event)
-        self.sendMouseEventToChildren(self, event)
+        self.sendMouseEventToChildren(self, event, EventType.CLICK)
 
-    def sendMouseEventToChildren(self, element: UIElement, event):
+    def mouseDragged(self, event):
+        # Sadly, MouseMotionEvents don't capture state, so no metadata
+        self.sendMouseEventToChildren(self, event, EventType.DRAG)
+
+    def sendMouseEventToChildren(self, element: UIElement, event, evtType):
         childIdx = len(element.children) - 1
         while childIdx >= 0:
             curChild = element.children[childIdx]
-            if self.processMouseEvent(curChild, event):
+            if self.processMouseEvent(curChild, event, evtType):
                 break
             childIdx -= 1
 
-    def processMouseEvent(self, element: UIElement, event):
+    def processMouseEvent(self, element: UIElement, event, evtType):
         inBounds = False
         propagateToChildren = True
-        if (element.x <= event.x <= element.x + element.getWidth()
-                and element.y <= event.y <= element.y + element.getHeight()):
+        if evtType == EventType.DRAG:
+            eventStartX, eventStartY = self.dragStart
+        else:
+            eventStartX = event.x
+            eventStartY = event.y
+
+        if (element.x <= eventStartX <= element.x + element.getWidth() and
+                element.y <= eventStartY <= element.y + element.getHeight()):
             # This would be easier with copy.(deep)copy, but we get pickling
             # errors
             oldX = event.x
@@ -159,7 +190,10 @@ class App(CMUApp, UIElement):
                 propagateToChildren = False
 
             event.stopPropagation = stopPropagation
-            element.onClick(event)
+            if evtType == EventType.CLICK:
+                element.onClick(event)
+            elif evtType == EventType.DRAG:
+                element.onDrag(event)
             event.x = oldX
             event.y = oldY
             inBounds = True
@@ -167,7 +201,7 @@ class App(CMUApp, UIElement):
         if propagateToChildren:
             # we need to go through CHILDREN frontmost-to-backmost as well
             # so that frontmost callers can block
-            self.sendMouseEventToChildren(element, event)
+            self.sendMouseEventToChildren(element, event, evtType)
 
         return inBounds
 

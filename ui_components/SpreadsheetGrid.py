@@ -22,12 +22,13 @@ class Direction(Enum):
     DOWN = (1, 0)
 
 class SpreadsheetGrid(UIElement):
+    rowHeight = 25
+    colWidth = 115
+
     def __init__(self, name, x, y, **props):
         super().__init__(name, x, y, props)
         self.numRows = 20
         self.numCols = 7
-        self.rowHeight = 25
-        self.colWidth = 115
         self.siderWidth = 25
         self.curTopRow = 0
         self.curLeftCol = 0
@@ -76,6 +77,12 @@ class SpreadsheetGrid(UIElement):
                                    height=self.rowHeight, fill='white',
                                    borderColor=''))
 
+        # preview -- do this before headers/siders so it's easy to insert before
+        previewY = (1 + self.numRows) * self.rowHeight
+        self.appendChild(UICell('preview', 0, previewY, placeholder='',
+                                width=self.getWidth(), height=self.rowHeight,
+                                fill='white', editable=False, visibleChars=115))
+
         # headers/siders
         for headerNum in range(self.numCols):
             x = headerNum * self.colWidth + self.siderWidth  # skip over siders
@@ -96,12 +103,6 @@ class SpreadsheetGrid(UIElement):
                                     width=self.siderWidth, fill='lightgray',
                                     height=self.rowHeight, align='center',
                                     onSelect=self.setSelectedCells))
-
-        # preview
-        previewY = (1 + self.numRows) * self.rowHeight
-        self.appendChild(UICell('preview', 0, previewY, placeholder='',
-                                width=self.getWidth(), height=self.rowHeight,
-                                editable=False, visibleChars=115))
 
         self.makeKeyListener()
 
@@ -144,6 +145,7 @@ class SpreadsheetGrid(UIElement):
             cell.rerender()
 
     def scroll(self, direction):
+        # TODO: Figure out why charts "snap" on scroll
         # save current cell if we're in one
         if self.activeCell:
             self.activeCell.finishEditing()
@@ -179,7 +181,8 @@ class SpreadsheetGrid(UIElement):
         return self.numCols * self.colWidth + self.siderWidth
 
     def getHeight(self):
-        return (1 + self.numRows) * self.rowHeight
+        # include headers and preview
+        return (2 + self.numRows) * self.rowHeight
 
     def setActiveCell(self, sender):
         if self.activeCell:
@@ -365,7 +368,7 @@ class SpreadsheetGrid(UIElement):
             curCol = selCol
         return True
 
-    def insertChart(self, type: ChartType):
+    def insertChart(self, chartType: ChartType):
         # prepare refs for cells
         colRefs = {}
         for cell in self.selectedCells:
@@ -424,7 +427,7 @@ class SpreadsheetGrid(UIElement):
             ident = self.charts[-1].ident + 1
         else:
             ident = 0
-        data = ChartData(ident, type, defaultTitle, indSeries, depSeries,
+        data = ChartData(ident, chartType, defaultTitle, indSeries, depSeries,
                          None, None, None, None,
                          self.curTopRow, self.curLeftCol, autocolor=True)
         self.addChart(data)
@@ -437,9 +440,7 @@ class SpreadsheetGrid(UIElement):
     # appends a chart to the view based on chart data
     def appendChartChild(self, chartData):
         # TODO: Don't draw wildly off-screen charts
-        x = ((chartData.col - self.curLeftCol) * self.colWidth)\
-            + self.siderWidth
-        y = ((chartData.row - self.curTopRow) + 1) * self.rowHeight
+        x, y = self.getChartCoords(chartData)
 
         chartTypeMap = {
             ChartType.PIE: PieChart,
@@ -447,12 +448,19 @@ class SpreadsheetGrid(UIElement):
             ChartType.SCATTER: ScatterChart,
             ChartType.BAR: BarChart
         }
-        self.appendChild(chartTypeMap[chartData.chartType](
+        # TODO: We can simplify this and other event methods significantly by simply passing identifiers from the caller
+        self.appendBefore(chartTypeMap[chartData.chartType](
             f'chart{chartData.ident}',
             x, y, data=chartData,
             onDelete=lambda ident=chartData.ident: self.deleteChart(ident),
-            onConfigure=lambda: self.deselectAllCellsButSender(None)
-        ))
+            onConfigure=lambda: self.deselectAllCellsButSender(None),
+            onMove=self.moveChart), 'preview')
+
+    def getChartCoords(self, chartData):
+        x = ((chartData.col - self.curLeftCol) * self.colWidth) \
+            + self.siderWidth
+        y = ((chartData.row - self.curTopRow) + 1) * self.rowHeight
+        return x, y
 
     def deleteChart(self, ident):
         self.removeChild(f'chart{ident}')
@@ -460,6 +468,15 @@ class SpreadsheetGrid(UIElement):
         while i < len(self.charts):
             if self.charts[i].ident == ident:
                 self.charts.pop(i)
+                return
+            i += 1
+
+    def moveChart(self, sender, coords):
+        i = 0
+        while i < len(self.charts):
+            if self.charts[i].ident == sender.props['data'].ident:
+                self.charts[i].row, self.charts[i].col = coords
+                sender.x, sender.y = self.getChartCoords(self.charts[i])
                 return
             i += 1
 
