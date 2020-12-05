@@ -123,6 +123,7 @@ class App(CMUApp, UIElement):
         CMUApp.__init__(self, width=self.width, height=self.height,
                         autorun=False)
         self.appendChild(scene)
+        self.curModalId = 0
 
     @staticmethod
     def load(scene):
@@ -202,12 +203,14 @@ class App(CMUApp, UIElement):
     # is dismissed
     def runModal(self, view):
         from modular_graphics.modal import Modal
-        if not self.hasChild('modal'):
-            self.appendChild(Modal('modal', (self.width - view.getWidth()) // 2,
-                                   50, view=view, onDismiss=self._dismissModal))
+        name = f'modal{self.curModalId}'
+        self.appendChild(Modal(
+            name, (self.width - view.getWidth()) // 2, 50, view=view,
+            onDismiss=lambda name=name: self._dismissModal(name)))
+        self.curModalId += 1
 
-    def _dismissModal(self):
-        self.removeChild('modal')
+    def _dismissModal(self, name):
+        self.removeChild(name)
 
     @staticmethod
     def _addEventMetadata(event):

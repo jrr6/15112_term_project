@@ -1,3 +1,8 @@
+# BarChart.py
+# Joseph Rotella (jrotella, F0)
+#
+# Contains UI code for bar chart data visualization.
+
 from data_visualization.ChartData import ChartData
 from data_visualization.GenericChart import GenericChart
 from modular_graphics import RelativeCanvas

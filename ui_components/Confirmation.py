@@ -10,7 +10,7 @@ from modular_graphics.modal import ModalView
 class Confirmation(ModalView):
     def __init__(self, **props):
         super().__init__(props)
-        self.height = 200
+        self.height = 100
         self.width = 500
         self.buttonWidth = 100
         self.startY = 10
@@ -22,26 +22,24 @@ class Confirmation(ModalView):
         else:
             text = ''
 
-        if 'onConfirm' in self.props:
-            onConfirm = self.props['onConfirm']
-        else:
-            onConfirm = lambda: None
-
         y = self.startY
         self.appendChild(Text(
             'label', self.width // 2, self.startY, text=text
         ))
         y += self.yStep
         self.appendChild(Button(
-            'submit', (self.width - self.buttonWidth) // 2, y, text='Cancel',
-            width=self.buttonWidth))
+            'cancel', (self.width - 3 * self.buttonWidth) // 2, y, text='Cancel',
+            width=self.buttonWidth, action=self._buttonClick))
         self.appendChild(Button(
             'submit', (self.width + self.buttonWidth) // 2, y, text='OK',
-            width=self.buttonWidth, action=onConfirm))
+            width=self.buttonWidth,
+            action=lambda sender: self._buttonClick(sender, True)))
 
-    def onSubmit(self, _):
-        input = self.getChild('path').text
-        self.props['onSubmit'](input)
+    def _buttonClick(self, sender, isConfirm=False):
+        if isConfirm:
+            # disregard sender param with lambda
+            if 'onConfirm' in self.props:
+                self.props['onConfirm']()
         self.dismiss()
 
     def getWidth(self):

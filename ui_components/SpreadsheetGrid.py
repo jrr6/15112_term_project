@@ -225,6 +225,7 @@ class SpreadsheetGrid(UIElement):
                 self.highlighted.append(child)
 
     def setSelectedCells(self, sender, modifier):
+        # TODO: Incongruous cell appearance when command-double-clicking
         if self.activeCell and self.activeCell is not sender:
             self.activeCell.finishEditing()
 

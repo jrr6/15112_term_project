@@ -1,4 +1,7 @@
-import math
+# GenericChart.py
+# Joseph Rotella (jrotella, F0)
+#
+# Contains common UI code for charts.
 
 from data_visualization.ChartData import ChartData
 from modular_graphics import UIElement

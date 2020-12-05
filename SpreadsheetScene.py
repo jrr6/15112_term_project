@@ -88,59 +88,58 @@ class SpreadsheetScene(UIElement):
                                    onSubmit=self.readFile))
 
     def writeFile(self, path, data):
-        print('call', repr(path), data)
         if os.path.exists(path):
-            print('exists')
-            # TODO: Figure out modal method call dependency loop (we can't run this until the other dismisses…)
             self.runModal(Confirmation(
                 message=f'The file {path} already exists. '
-                        f'Do you want to overwrite it?'))
-            return  # change this
+                        f'Do you want to overwrite it?',
+                onConfirm=lambda path=path, data=data:
+                self.doWrite(path, data)))
         else:
             lastSep = path.rfind('/', -1)
             if lastSep > -1:
                 parentDir = path[:lastSep]
                 os.makedirs(parentDir)
+            self.doWrite(path, data)
 
+    def doWrite(self, path, data):
         with open(path, 'w') as file:
             file.write(data)
 
     def readFile(self, path):
         if not os.path.isfile(path):
-            print('NO')
             self.runModal(Confirmation(
                 message=f'There exists no file {path}.'))
             return
 
-        # try:
-        with open(path, 'r') as file:
-            # note -- we want to get empty strings, so splitlines() and
-            # other "clever" Python built-ins are a bad idea
-            lines = file.read().split('\n')
+        try:
+            with open(path, 'r') as file:
+                # note -- we want to get empty strings, so splitlines() and
+                # other "clever" Python built-ins are a bad idea
+                lines = file.read().split('\n')
 
-            # if it's an empty file, just clear everything
-            if len(lines) == 0:
-                Cell.overwriteFromData(None)
-                charts = []
-            else:
-                Cell.overwriteFromData(lines[0])
-                # if there are no charts, don't bother parsing
-                if len(lines) == 1:
+                # if it's an empty file, just clear everything
+                if len(lines) == 0:
+                    Cell.overwriteFromData(None)
                     charts = []
                 else:
-                    chartStrs = lines[1].split(SpreadsheetScene.kChartDelimiter)
-                    charts = []
-                    for chartStr in chartStrs:
-                        chart = ChartData.deserialize(chartStr)
-                        if chart is not None:
-                            charts.append(chart)
+                    Cell.overwriteFromData(lines[0])
+                    # if there are no charts, don't bother parsing
+                    if len(lines) == 1:
+                        charts = []
+                    else:
+                        chartStrs = lines[1].split(SpreadsheetScene.kChartDelimiter)
+                        charts = []
+                        for chartStr in chartStrs:
+                            chart = ChartData.deserialize(chartStr)
+                            if chart is not None:
+                                charts.append(chart)
 
-            # reload the grid with new data
-            self.getChild('grid').reload(charts)
-        # except:
-        #     self.runModal(Confirmation(
-        #         message=f'The file {path} could not be read.'))
-        #     return
+                # reload the grid with new data
+                self.getChild('grid').reload(charts)
+        except:
+            self.runModal(Confirmation(
+                message=f'The file {path} could not be read.'))
+            return
 
 if __name__ == '__main__':
     App.load(SpreadsheetScene())
