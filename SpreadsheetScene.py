@@ -107,7 +107,7 @@ class SpreadsheetScene(UIElement):
                 onConfirm=lambda path=path, data=data:
                 self.doWrite(path, data)))
         else:
-            lastSep = path.rfind('/', -1)
+            lastSep = path.rfind('/')
             if lastSep > -1:
                 parentDir = path[:lastSep]
                 os.makedirs(parentDir)
