@@ -330,7 +330,7 @@ class SpreadsheetGrid(UIElement):
 
         if event.key == 'l' and event.commandDown:
             self.insertChart(ChartType.LINE)
-        elif event.key == 's' and event.commandDown:
+        elif event.key == 't' and event.commandDown:
             self.insertChart(ChartType.SCATTER)
         elif event.key == 'p' and event.commandDown:
             self.insertChart(ChartType.PIE)

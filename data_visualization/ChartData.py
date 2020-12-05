@@ -8,7 +8,10 @@ from typing import Union
 
 
 class Series:
-    def __init__(self, titleRef, data: list, color: Union[str, None]=None):
+    from formulae import CellRef
+
+    def __init__(self, titleRef, data: list[CellRef],
+                 color: Union[str, None]=None):
         self._titleRef = titleRef
         self._data = data  # callers should just use `evaluated` methods
         self.color = color  # only required for dependent series
@@ -34,8 +37,19 @@ class Series:
         from formulae import CellRef
         if isinstance(self._data[index], CellRef):
             return self._data[index].getValue()
-        else:
+        else:  # this is for debugging and shouldn't be reached in production
             return self._data[index]
+
+    def serialize(self):
+        result = f'{self._titleRef.serialize()},'
+        if self.color is not None and ',' not in self.color:
+            result += f'{self.color}'
+        result += ','
+        for ref in self._data:
+            result += ref.serialize() + ','
+        result = result[:-1]
+        return result
+
 
 class ChartType(Enum):
     BAR = 0
@@ -69,3 +83,25 @@ class ChartData:
         for i in range(len(self.dependentSeries)):
             self.dependentSeries[i].color = \
                 colors.pop(random.randint(0, len(colors) - 1))
+
+    def serialize(self):
+        from SpreadsheetScene import SpreadsheetScene
+        # NOTE: we need to ensure no serialized sub-entity contains unescaped
+        #       pipes
+
+        # Replace the delimeter used by SpreadsheetApp so it doesn't need to
+        title = self.title.replace('|', '\\|')\
+            .replace(SpreadsheetScene.kChartDelimiter, '')
+        xMin = str(self.xMin) if self.xMin is not None else ''
+        xMax = str(self.xMax) if self.xMax is not None else ''
+        yMin = str(self.yMin) if self.yMin is not None else ''
+        yMax = str(self.yMax) if self.yMax is not None else ''
+
+        indepSeries = self.independentSeries.serialize()  # only `|`, `,` and #s
+        depSeries = ''
+        for series in self.dependentSeries:
+            depSeries += series.serialize() + '|'
+        depSeries = depSeries[:-1]
+
+        return f'{self.ident}|{self.chartType.value}|{self.row}|{self.col}|'\
+               f'{xMin}|{xMax}|{yMin}|{yMax}|{title}|{indepSeries}|{depSeries}'

@@ -70,6 +70,16 @@ class Cell(object):
     def getShallowDependencies(row, col):
         return Cell._deps.getShallowDependencies(CellRef(row, col))
 
+    @staticmethod
+    def serializeAll():
+        result = ''
+        for cellLoc in Cell._cells:
+            cell = Cell._cells[cellLoc]
+            escaped = cell.raw.replace(',', '\\,')
+            result += f'{cellLoc[0]},{cellLoc[1]},{escaped},'
+        result = result[:-1]  # strip trailing comma
+        return result
+
     # Returns computed value of cell (with appropriate type/formula result)
     def value(self):
         if self.formula:
@@ -100,6 +110,9 @@ class CellRef(object):
 
     def getValue(self):
         return Cell.getValue(self.row, self.col)
+
+    def serialize(self):
+        return f'{self.row}:{self.col}'
 
     def __hash__(self):
         return hash((self.row, self.col))
