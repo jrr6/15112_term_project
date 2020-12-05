@@ -1,3 +1,5 @@
+import math
+
 from data_visualization.ChartData import ChartData
 from modular_graphics import UIElement
 from modular_graphics.input_elements import DoubleClickable
@@ -88,7 +90,7 @@ class GenericChart(DoubleClickable, UIElement):
             yMax = yMaxOverride
 
         for i in range(5):
-            axisLabel = str(yMin + (i / 4) * (yMax - yMin))
+            axisLabel = self.ithLabelString(yMin, yMax, i)
 
             lineX = self.kGraphStartX
             textX = lineX - self.kEdgeLabelMargin
@@ -100,7 +102,7 @@ class GenericChart(DoubleClickable, UIElement):
     def drawBottomLabels(self, canvas):
         xMin, xMax = self.getXLimits()
         for i in range(5):
-            axisLabel = str(xMin + (i / 4) * (xMax - xMin))
+            axisLabel = self.ithLabelString(xMin, xMax, i)
 
             lineY = self.kGraphBotY
             textY = lineY + self.kEdgeLabelMargin
@@ -114,6 +116,14 @@ class GenericChart(DoubleClickable, UIElement):
                           self.kGraphBotY + self.kBottomLabelHeight,
                           anchor='n',
                           text=self.props['data'].independentSeries.title)
+
+    def ithLabelString(self, axisMin, axisMax, i):
+        rawVal = axisMin + (i / 4) * (axisMax - axisMin)
+        roundedVal = round(rawVal * 100) / 100
+        if roundedVal.is_integer():
+            return str(int(roundedVal))
+        else:
+            return str(roundedVal)
 
     def plotData(self, canvas, linear=False):
         chartData = self.props['data']

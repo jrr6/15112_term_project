@@ -77,8 +77,11 @@ class Cell(object):
         else:
             try:
                 return int(self.raw)
-            except ValueError:
-                return self.raw
+            except:
+                try:
+                    return float(self.raw)
+                except:
+                    return self.raw
 
     def __repr__(self):
         rep = f'Cell({self.raw}'
