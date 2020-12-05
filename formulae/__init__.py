@@ -9,6 +9,8 @@ from typing import Union
 
 from formulae.data_structures import Stack, DependencyGraph
 from formulae.operators import Operator
+from utils import splitEscapedString
+
 
 class Cell(object):
     def __init__(self):
@@ -80,6 +82,24 @@ class Cell(object):
         result = result[:-1]  # strip trailing comma
         return result
 
+    @staticmethod
+    def overwriteFromData(data: Union[str, None]):
+        Cell._cells = {}
+        Cell._deps = DependencyGraph()
+        if data is None or data == '':
+            return
+        curRow, curCol = None, None
+        entities = splitEscapedString(data, ',')
+        for i in range(len(entities)):
+            if i % 3 == 0:
+                curRow = int(entities[i])
+            elif i % 3 == 1:
+                curCol = int(entities[i])
+            else:
+                deEscaped = entities[i].replace('\\,', ',')
+                Cell.setRaw(curRow, curCol, deEscaped)
+            i += 1
+
     # Returns computed value of cell (with appropriate type/formula result)
     def value(self):
         if self.formula:
@@ -113,6 +133,11 @@ class CellRef(object):
 
     def serialize(self):
         return f'{self.row}:{self.col}'
+
+    @staticmethod
+    def deserialize(data):
+        entities = data.split(':')
+        return CellRef(int(entities[0]), int(entities[1]))
 
     def __hash__(self):
         return hash((self.row, self.col))

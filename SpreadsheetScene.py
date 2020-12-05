@@ -64,6 +64,8 @@ class SpreadsheetScene(UIElement):
     def onKeypress(self, event):
         if event.key == 's' and event.commandDown:
             self.save()
+        elif event.key == 'o' and event.commandDown:
+            self.open()
 
     def save(self):
         grid = self.getChild('grid')
@@ -80,6 +82,10 @@ class SpreadsheetScene(UIElement):
         self.runModal(FileSelector(message='Save File',
                                    onSubmit=lambda path, data=data:
                                    self.writeFile(path, data)))
+
+    def open(self):
+        self.runModal(FileSelector(message='Open File',
+                                   onSubmit=self.readFile))
 
     def writeFile(self, path, data):
         print('call', repr(path), data)
@@ -99,6 +105,42 @@ class SpreadsheetScene(UIElement):
         with open(path, 'w') as file:
             file.write(data)
 
+    def readFile(self, path):
+        if not os.path.isfile(path):
+            print('NO')
+            self.runModal(Confirmation(
+                message=f'There exists no file {path}.'))
+            return
+
+        # try:
+        with open(path, 'r') as file:
+            # note -- we want to get empty strings, so splitlines() and
+            # other "clever" Python built-ins are a bad idea
+            lines = file.read().split('\n')
+
+            # if it's an empty file, just clear everything
+            if len(lines) == 0:
+                Cell.overwriteFromData(None)
+                charts = []
+            else:
+                Cell.overwriteFromData(lines[0])
+                # if there are no charts, don't bother parsing
+                if len(lines) == 1:
+                    charts = []
+                else:
+                    chartStrs = lines[1].split(SpreadsheetScene.kChartDelimiter)
+                    charts = []
+                    for chartStr in chartStrs:
+                        chart = ChartData.deserialize(chartStr)
+                        if chart is not None:
+                            charts.append(chart)
+
+            # reload the grid with new data
+            self.getChild('grid').reload(charts)
+        # except:
+        #     self.runModal(Confirmation(
+        #         message=f'The file {path} could not be read.'))
+        #     return
 
 if __name__ == '__main__':
     App.load(SpreadsheetScene())

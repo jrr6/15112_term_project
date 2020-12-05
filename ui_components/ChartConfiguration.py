@@ -18,7 +18,7 @@ class ChartConfiguration(ModalView):
         self.col2Start = (215, self.headerY + 2 * self.rowHeight)
         self.titleFieldWidth = 305
         self.labelWidth = 50
-        self.longLabelWidth = 200
+        self.longLabelWidth = 245
         self.buttonWidth = 100
         if 'data' not in self.props or 'onDelete' not in self.props:
             raise Exception('Missing required props for chart configurator')

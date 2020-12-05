@@ -287,14 +287,16 @@ class SpreadsheetGrid(UIElement):
                 i += 1
 
     def updatePreview(self):
-        if len(self.selectedCells) == 1:
+        preview = self.getChild('preview')
+        if len(self.selectedCells) == 0:
+            preview.setText('')
+        elif len(self.selectedCells) == 1:
             selectedRow, selectedCol = self.absRowColFromCellName(
                 self.selectedCells[0].name)
-            self.getChild('preview').setText(Cell.getRaw(selectedRow,
-                                                         selectedCol))
+            preview.setText(Cell.getRaw(selectedRow, selectedCol))
         else:
             # TODO: Show some useful stats or something...
-            self.getChild('preview').setText('Multiple cells selected')
+            preview.setText('Multiple cells selected')
             pass
 
     def onKeypress(self, event):
@@ -460,6 +462,15 @@ class SpreadsheetGrid(UIElement):
                 return
             i += 1
 
+    # reloads the grid, fetching cells from Cell and replacing charts with
+    # those specified
+    def reload(self, charts):
+        self.selectedCells = []
+        self.highlighted = []
+        self.activeCell = None
+        self.charts = charts
+        self.removeAllChildren()
+        self.initChildren()
 
     # returns row and column for cell with given name.
     # if name doesn't represent a body cell (e.g., header/sider/preview),

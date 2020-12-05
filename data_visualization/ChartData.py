@@ -6,6 +6,9 @@ import random
 from enum import Enum
 from typing import Union
 
+from formulae import CellRef
+from utils import splitEscapedString
+
 
 class Series:
     from formulae import CellRef
@@ -49,6 +52,16 @@ class Series:
             result += ref.serialize() + ','
         result = result[:-1]
         return result
+
+    @staticmethod
+    def deserialize(data):
+        entities = data.split(',')
+        titleRef = CellRef.deserialize(entities[0])
+        color = entities[1] if entities[1] != '' else None
+        data = []
+        for entity in entities[2:]:
+            data.append(CellRef.deserialize(entity))
+        return Series(titleRef, data, color)
 
 
 class ChartType(Enum):
@@ -105,3 +118,24 @@ class ChartData:
 
         return f'{self.ident}|{self.chartType.value}|{self.row}|{self.col}|'\
                f'{xMin}|{xMax}|{yMin}|{yMax}|{title}|{indepSeries}|{depSeries}'
+
+    @staticmethod
+    def deserialize(data):
+        if data == '':
+            return
+        entities = splitEscapedString(data, '|')
+        ident = entities[0]
+        type = ChartType(int(entities[1]))
+        row = int(entities[2])
+        col = int(entities[3])
+        xMin = int(entities[4]) if entities[4] != '' else None
+        xMax = int(entities[5]) if entities[5] != '' else None
+        yMin = int(entities[6]) if entities[6] != '' else None
+        yMax = int(entities[7]) if entities[7] != '' else None
+        title = entities[8].replace('\\|', '|')
+        indepSeries = Series.deserialize(entities[9])
+        # everything else in dependent series
+        depSeries = [Series.deserialize(seriesData)
+                     for seriesData in entities[10:]]
+        return ChartData(ident, type, title, indepSeries, depSeries, xMin, xMax,
+                         yMin, yMax, row, col)
