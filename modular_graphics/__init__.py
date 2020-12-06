@@ -129,9 +129,9 @@ class EventType(Enum):
 class App(CMUApp, UIElement):
     instance = None
 
-    # TODO: Making this class-level feels wrong, but we need it to be accessible
-    #       before App is finished initing (otherwise we can't register key
-    #       listeners in `initChildren()`)
+    # Making this class-level feels wrong, but we need it to be accessible
+    # before App is finished initing (otherwise we can't register key
+    # listeners in `initChildren()`)
     keyListeners = []
 
     def __init__(self, scene):

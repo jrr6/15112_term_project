@@ -21,6 +21,16 @@ class Direction(Enum):
     UP = (-1, 0)
     DOWN = (1, 0)
 
+    @staticmethod
+    def fromKey(keyStr):
+        upper = keyStr.upper()
+        if upper in Direction.__members__:
+            return Direction[upper]
+        elif upper == 'TAB':
+            return Direction.RIGHT
+        else:
+            return None
+
 class SpreadsheetGrid(UIElement):
     rowHeight = 25
     colWidth = 115
@@ -232,7 +242,9 @@ class SpreadsheetGrid(UIElement):
         if self.activeCell and self.activeCell is not sender:
             self.activeCell.finishEditing()
 
-        if (modifier is not None) and (len(self.selectedCells) > 0):
+        if (modifier is not None  # only allow modifiers for non-header/siders
+                and len(self.selectedCells) > 0
+                and sender.name[0] != 'H' and sender.name[0] != 'S'):
             if modifier == 'Command':
                 # Command either adds another, or deselects current
                 if sender in self.selectedCells:
@@ -246,7 +258,7 @@ class SpreadsheetGrid(UIElement):
             # it won't be in there anyway, so it's fine)
             self.deselectAllCellsButSender(sender)
 
-            if sender.name[0] == 'H' or sender.name == 'S':  # whole row/column
+            if sender.name[0] == 'H' or sender.name[0] == 'S':  # whole row/col
                 # Select the entire col (index 1 in the tuple) if it's a header,
                 # or row (index 0 in the tuple) if it's a sider
                 rowColTupleIdx = 1 if sender.name[0] == 'H' else 0
@@ -263,7 +275,6 @@ class SpreadsheetGrid(UIElement):
 
     # Selects a "block" of cells (i.e., shift-select)
     def blockSelect(self, sender):
-        # TODO: don't crash on block-selecting headers/siders!
         pivotCell = self.selectedCells[0]
         self.deselectAllCellsButSender(sender, startIndex=1)
         self.selectedCells = [pivotCell]
@@ -314,29 +325,47 @@ class SpreadsheetGrid(UIElement):
                 try:
                     res = formula.evaluate()
                     print(formula.operator.name, res)
-                    summaryText += formula.operator.name + '=' + str(res) + '   '
+                    summaryText += (formula.operator.name + '='
+                                    + str(res) + '   ')
                 except:
                     pass
             preview.setText(summaryText[:-1])  # ignore trailing space
             pass
 
     def onKeypress(self, event):
-        if event.optionDown:
-            if event.key == 'Right' and self.curLeftCol < 26 - self.numCols:
-                self.scroll(Direction.RIGHT)
-            elif event.key == 'Left' and self.curLeftCol > 0:
-                self.scroll(Direction.LEFT)
-            elif event.key == 'Up' and self.curTopRow > 0:
-                self.scroll(Direction.UP)
-            elif event.key == 'Down':
-                self.scroll(Direction.DOWN)
-        else:
-            if self.selectedCells == []:
-                return
-            lastSelection = self.selectedCells[-1]
-            lastRow, lastCol = SpreadsheetGrid.rowColFromCellName(
-                lastSelection.name)
-            # TODO: Implement cell navigation via keyboard input
+        arrowDir = Direction.fromKey(event.key)
+        if arrowDir:
+            drow, dcol = arrowDir.value
+            if event.optionDown:
+                nextRow, nextCol = self.curTopRow + drow, self.curLeftCol + dcol
+                if self.isLegalScrollPos(nextRow, nextCol):
+                    self.scroll(arrowDir)
+            else:
+                if self.selectedCells == []:
+                    return
+                prevSelection = self.selectedCells[0]
+                prevRow, prevCol = SpreadsheetGrid.rowColFromCellName(
+                    prevSelection.name)
+                nextRow, nextCol = prevRow + drow, prevCol + dcol
+
+                # NOTE: we only clear all selected AFTER we verify legality
+                if (0 <= nextRow < self.numRows
+                        and 0 <= nextCol < self.numCols):
+                    # if the cell is on screen, just move to it
+                    self.deselectAllCellsButSender(None)  # clear old selection
+                    self.getChild(f'{nextRow},{nextCol}').select()
+                else:
+                    # if the cell is off-screen, make sure it's legal and scroll
+                    scrollRow = self.curTopRow + drow
+                    scrollCol = self.curLeftCol + dcol
+                    if self.isLegalScrollPos(scrollRow, scrollCol):
+                        self.deselectAllCellsButSender(
+                            None)  # clear old selection
+                        self.scroll(arrowDir)
+                        self.getChild(prevSelection.name).select()
+                    elif len(self.selectedCells) > 1:
+                        # standard behavior is to reduce selection to 1
+                        self.deselectAllCellsButSender(self.selectedCells[0])
 
         if event.key == 'i' and event.commandDown:
             if len(self.selectedCells) == 0:
@@ -359,6 +388,9 @@ class SpreadsheetGrid(UIElement):
             self.insertChart(ChartType.PIE)
         elif event.key == 'b' and event.commandDown:
             self.insertChart(ChartType.BAR)
+
+    def isLegalScrollPos(self, row, col):
+        return 0 <= row and 0 <= col < 26 - self.numCols + 1
 
     def importWebTable(self, table: Table, targetCell):
         numLetteredCols = 26
