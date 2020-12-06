@@ -500,6 +500,9 @@ class SpreadsheetGrid(UIElement):
     # reloads the grid, fetching cells from Cell and replacing charts with
     # those specified
     def reload(self, charts):
+        # Note: this is ESSENTIAL, or old cells won't resign their key listener
+        # status, making them zombies that hog memory and ruin interaction
+        self.deselectAllCellsButSender(None)
         self.selectedCells = []
         self.highlighted = []
         self.activeCell = None

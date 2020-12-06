@@ -83,6 +83,10 @@ class Cell(object):
         return result
 
     @staticmethod
+    def empty():
+        return len(Cell._cells) == 0
+
+    @staticmethod
     def overwriteFromData(data: Union[str, None]):
         Cell._cells = {}
         Cell._deps = DependencyGraph()

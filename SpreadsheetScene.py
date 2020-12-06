@@ -76,6 +76,24 @@ class SpreadsheetScene(UIElement):
             self.save()
         elif event.key == 'o' and event.commandDown:
             self.open()
+        elif event.key == 'n' and event.commandDown:
+            self.newDoc()
+
+    def newDoc(self):
+        curChartsEmpty = len(self.getChild('grid').charts) == 0
+        curCellsEmpty = Cell.empty()
+
+        if not (curChartsEmpty and curCellsEmpty):
+            self.runModal(Confirmation(
+                message='Do you want to create a new document? '
+                        'Unsaved changes will be lost.',
+                onConfirm=self.resetDoc))
+        else:
+            self.resetDoc()
+
+    def resetDoc(self):
+        Cell.overwriteFromData(None)
+        self.getChild('grid').reload([])
 
     def save(self):
         grid = self.getChild('grid')
