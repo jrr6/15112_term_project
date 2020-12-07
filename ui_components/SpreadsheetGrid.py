@@ -368,19 +368,8 @@ class SpreadsheetGrid(UIElement):
                         self.deselectAllCellsButSender(self.selectedCells[0])
 
         if event.key == 'i' and event.commandDown:
-            if len(self.selectedCells) == 0:
-                return
-
-            target = self.selectedCells[0]
-            # TODO: Is there a better way?
-            # deselect everything to ensure we don't catch modal keystrokes
-            self.deselectAllCellsButSender(None)
-            importer = WebImporter(
-                onImport=lambda table, target=target:
-                self.importWebTable(table, target))
-            self.runModal(importer)
-
-        if event.key == 'l' and event.commandDown:
+            self.startImport()
+        elif event.key == 'l' and event.commandDown:
             self.insertChart(ChartType.LINE)
         elif event.key == 't' and event.commandDown:
             self.insertChart(ChartType.SCATTER)
@@ -391,6 +380,17 @@ class SpreadsheetGrid(UIElement):
 
     def isLegalScrollPos(self, row, col):
         return 0 <= row and 0 <= col < 26 - self.numCols + 1
+
+    def startImport(self):
+        if len(self.selectedCells) == 0:
+            return
+
+        target = self.selectedCells[0]
+        self.deselectAllCellsButSender(None)
+        importer = WebImporter(
+            onImport=lambda table, target=target:
+            self.importWebTable(table, target))
+        self.runModal(importer)
 
     def importWebTable(self, table: Table, targetCell):
         numLetteredCols = 26

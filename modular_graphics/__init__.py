@@ -36,6 +36,8 @@ class RelativeCanvas(object):
         self.canvas.create_arc(x0 + self.x, y0 + self.y, x1 + self.x,
                                y1 + self.y, **kwargs)
 
+    def createImage(self, x, y, **kwargs):
+        self.canvas.create_image(x + self.x, y + self.y, **kwargs)
 
 class UIElement(ABC):
     def __init__(self, name, x, y, props):
@@ -134,20 +136,20 @@ class App(CMUApp, UIElement):
     # listeners in `initChildren()`)
     keyListeners = []
 
-    def __init__(self, scene):
+    def __init__(self, title, scene):
         UIElement.__init__(self, 'root', 0, 0, {})
         self.width = scene.getWidth()
         self.height = scene.getHeight()
         # IMPORTANT: set autorun to false or init will never finish!
         CMUApp.__init__(self, width=self.width, height=self.height,
-                        autorun=False)
+                        autorun=False, title=title)
         self.appendChild(scene)
         self.curModalId = 0
         self.dragStart = None
 
     @staticmethod
-    def load(scene):
-        App.instance = App(scene)
+    def load(title, scene):
+        App.instance = App(title, scene)
         App.instance.run()
 
     def mousePressed(self, event):
@@ -176,6 +178,8 @@ class App(CMUApp, UIElement):
             eventStartX = event.x
             eventStartY = event.y
 
+        if element.name.find('chart') > -1:
+            print(self.dragStart)
         if (element.x <= eventStartX <= element.x + element.getWidth() and
                 element.y <= eventStartY <= element.y + element.getHeight()):
             # This would be easier with copy.(deep)copy, but we get pickling

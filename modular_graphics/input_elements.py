@@ -7,7 +7,8 @@ import string
 import time
 
 from modular_graphics import UIElement
-from modular_graphics.atomic_elements import Rectangle, Text
+from modular_graphics.atomic_elements import Rectangle, Text, Image
+
 
 class DoubleClickable(object):
     def __init__(self, *args):
@@ -139,18 +140,28 @@ class Button(UIElement):
         self.height = props.get('height', 25)
 
     def initChildren(self):
-        self.appendChild(Rectangle('border', 0, 0,
-                                   width=self.width, height=self.height))
         if 'text' in self.props:
+            self.appendChild(Rectangle('border', 0, 0,
+                                       width=self.width, height=self.height))
             self.appendChild(Text('label', self.width // 2, self.height // 2,
                                   text=self.props['text']))
+        elif 'img' in self.props:
+            self.appendChild(Image('label-img', 0, 0, src=self.props['img'],
+                                   width=self.width, height=self.height,
+                                   anchor='nw'))
 
     def onClick(self, event):
         if 'action' in self.props:
             self.props['action'](self)
 
     def getHeight(self):
-        return self.height
+        if self.hasChild('label-img'):
+            return self.getChild('label-img').getHeight()
+        else:
+            return self.height
 
     def getWidth(self):
-        return self.width
+        if self.hasChild('label-img'):
+            return self.getChild('label-img').getWidth()
+        else:
+            return self.width

@@ -560,7 +560,9 @@ class App(object):
 
     def updateTitle(app):
         app._title = app._title or type(app).__name__
-        app._root.title(f'{app._title} ({app.width} x {app.height})')
+        # Modified: for aesthetic purposes
+        app._root.title(f'{app._title}')
+        # app._root.title(f'{app._title} ({app.width} x {app.height})')
 
     def getQuitMessage(app):
         appLabel = type(app).__name__
@@ -588,7 +590,8 @@ class App(object):
         # create the singleton root window
         if (App._theRoot is None):
             App._theRoot = Tk()
-            App._theRoot.createcommand('exit', lambda: '') # when user enters cmd-q, ignore here (handled in keyPressed)
+            # Modified: we want command+q to work!
+            # App._theRoot.createcommand('exit', lambda: '') # when user enters cmd-q, ignore here (handled in keyPressed)
             App._theRoot.protocol('WM_DELETE_WINDOW', lambda: App._theRoot.app.quit()) # when user presses 'x' in title bar
             App._theRoot.bind("<Button-1>", lambda event: App._theRoot.app._mousePressedWrapper(event))
             App._theRoot.bind("<B1-ButtonRelease>", lambda event: App._theRoot.app._mouseReleasedWrapper(event))

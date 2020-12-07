@@ -4,3 +4,4 @@ from ui_components.Confirmation import Confirmation
 from ui_components.FileSelector import FileSelector
 from ui_components.WebImporter import WebImporter
 from ui_components.ChartConfiguration import ChartConfiguration
+from ui_components.Toolbar import Toolbar

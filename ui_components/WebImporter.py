@@ -141,7 +141,7 @@ class WebImporter(ModalView):
             self.appendChild(Button(
                 f'btn{str(i)}', (self.getWidth() - buttonWidth) // 2, yPos,
                 height=buttonHeight, width=buttonWidth,
-                text=tables[i].name or f'Table {i}',
+                text=tables[i].name or f'Table {i + 1}',
                 # Lambdas evaluate variables at call-time, at which point i is
                 # always the last value it took on. Use default parameter as
                 # workaround--courtesy of https://stackoverflow.com/a/10452819

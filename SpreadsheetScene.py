@@ -9,8 +9,8 @@ from data_visualization import BarChart, PieChart, ChartData, Series, ChartType,
 from data_visualization.LineChart import LineChart
 from formulae import Cell
 from modular_graphics import UIElement, App
-from modular_graphics.atomic_elements import Rectangle
-from ui_components import SpreadsheetGrid, Confirmation, FileSelector
+from modular_graphics.atomic_elements import Rectangle, Image
+from ui_components import SpreadsheetGrid, Confirmation, FileSelector, Toolbar
 
 
 class SpreadsheetScene(UIElement):
@@ -18,13 +18,22 @@ class SpreadsheetScene(UIElement):
 
     def __init__(self):
         self.width = 850
-        self.height = 575
+        self.height = 620
         super().__init__('scene', 0, 0, {})
 
     def initChildren(self):
         self.makeKeyListener()
+        # create toolbar now, add LAST so it's topmost
+        toolbar = Toolbar('toolbar', 0, 0, width=self.width,
+                          new=self.newDoc, open=self.open, save=self.save,
+                          pie=self.chartHandler(ChartType.PIE),
+                          line=self.chartHandler(ChartType.LINE),
+                          scatter=self.chartHandler(ChartType.SCATTER),
+                          bar=self.chartHandler(ChartType.BAR),
+                          download=lambda: self.getChild('grid').startImport())
+
         gridX = 5
-        gridY = 5
+        gridY = toolbar.getHeight() + 10
         grid = SpreadsheetGrid('grid', gridX, gridY)
         self.appendChild(grid)
         self.appendChild(Rectangle('left-hider', 0, 0,
@@ -42,6 +51,10 @@ class SpreadsheetScene(UIElement):
                                    width=self.width,
                                    height=self.height - grid.getHeight(),
                                    fill='white', borderColor=''))
+
+        self.appendChild(toolbar)
+
+        # CHART TESTING CODE
         # chart = ChartData(ChartType.BAR, 'My Cool Chart',
         #                   Series('Attribute', ['Corporateness', 'Mundanity',
         #                                      'Use of Jargon']),
@@ -90,6 +103,11 @@ class SpreadsheetScene(UIElement):
                 onConfirm=self.resetDoc))
         else:
             self.resetDoc()
+
+    def chartHandler(self, chartType):
+        def handler():
+            self.getChild('grid').insertChart(chartType)
+        return handler
 
     def resetDoc(self):
         Cell.overwriteFromData(None)
@@ -172,4 +190,4 @@ class SpreadsheetScene(UIElement):
             return
 
 if __name__ == '__main__':
-    App.load(SpreadsheetScene())
+    App.load('SimpleSheets', SpreadsheetScene())
