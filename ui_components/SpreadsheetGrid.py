@@ -529,6 +529,17 @@ class SpreadsheetGrid(UIElement):
                 return
             i += 1
 
+    def onDrag(self, event):
+        x, y = event.x, event.y
+        row = int((y - self.rowHeight) / self.rowHeight)
+        col = int((x - self.siderWidth) / self.colWidth)
+        if 0 <= row < self.numRows and 0 <= col < self.numCols:
+            # This is a bit hacky, but we're just doing block select!
+            self.getChild(f'{row},{col}').select(modifier='Shift')
+            # We could equivalently do:
+            # self.blockSelect(self.getChild(f'{row},{col}'))
+            # but relying on blockSelect to reselect sender is weird
+
     # reloads the grid, fetching cells from Cell and replacing charts with
     # those specified
     def reload(self, charts):
