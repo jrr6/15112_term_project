@@ -111,10 +111,21 @@ class UIElement(ABC):
     def onKeypress(self, event):
         pass
 
-    def makeKeyListener(self):
+    # useful for ephemeral listeners to know when they've ceded
+    # called only when key listener status lost due to replacement as ephemeral
+    # listener--NOT when calling self.resignKeyListener()
+    def onResignKeyListener(self):
+        pass
+
+    def makeKeyListener(self, ephemeral=False):
         listeners = App.keyListeners
         if self not in listeners:
-            listeners.append(self)
+            if ephemeral:
+                if App.ephemeralListener is not None:
+                    App.ephemeralListener.onResignKeyListener()
+                App.ephemeralListener = self
+            else:
+                listeners.append(self)
 
     def resignKeyListener(self):
         listeners = App.keyListeners
@@ -135,6 +146,7 @@ class App(CMUApp, UIElement):
     # before App is finished initing (otherwise we can't register key
     # listeners in `initChildren()`)
     keyListeners = []
+    ephemeralListener = None
 
     def __init__(self, title, scene):
         UIElement.__init__(self, 'root', 0, 0, {})
@@ -211,6 +223,11 @@ class App(CMUApp, UIElement):
 
     def keyPressed(self, event):
         App._addEventMetadata(event)
+        # get the easy one taken care of first (also most likely to be
+        # topmost, so makes sense to call first)
+        if App.ephemeralListener is not None:
+            App.ephemeralListener.onKeypress(event)
+
         i = 0
         called = set()
         # Elements might resign key listener status when this is triggered,

@@ -75,7 +75,7 @@ class TextField(UIElement):
     def activate(self):
         self.removeChild('placeholder')
         self.getChild('border').props['fill'] = 'lightblue'
-        self.makeKeyListener()
+        self.makeKeyListener(ephemeral=True)
         self._renderText(True)
         self.active = True
         if 'onActivate' in self.props:
@@ -89,6 +89,9 @@ class TextField(UIElement):
         self._renderText(False)
         if 'onDeactivate' in self.props:
             self.props['onDeactivate'](self)
+
+    def onResignKeyListener(self):
+        self.deactivate()  # legal b/c manual calls to rKL don't trigger oRKL
 
     # saves the current cell text (via the parent's method), then deactivates
     def finishEditing(self):
