@@ -75,10 +75,15 @@ def mode(operands):
             mostFrequentElements.append(el)
     return average(mostFrequentElements)
 
+def literal(operands):
+    if len(operands) > 1:
+        raise Exception('Literal expressions may only have one operand')
+    return operands[0]
+
 # OPERATOR DEFINITIONS
 
 # Utility operator for literal formulae
-Operator('LITERAL', lambda x: x[0], numerical=False)
+Operator('LITERAL', literal, numerical=False)
 
 Operator('COUNT', lambda x: len(x), numerical=False)
 

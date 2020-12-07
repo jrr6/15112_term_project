@@ -195,6 +195,8 @@ class Formula(object):
 
         if not foundTokens:  # Something like `=D4` or `=2`
             operand = Formula._getCellOrLiteral(argString)
+            if len(operand) > 1:
+                raise Exception('Formula literal cannot be multiple values')
             result = Formula(Operator.get('LITERAL'), operand)
 
         # TODO: Figure out why the types of the operands aren't consistent
@@ -227,6 +229,26 @@ class Formula(object):
     def _getCellOrLiteral(text):
         if text == '':
             return []
+
+        if ':' in text:
+            cells = text.split(':')
+            if len(cells) != 2:
+                print('i')
+                raise Exception('Illegal cell range format')
+            cell0 = Formula._getCellOrLiteral(cells[0])[0]
+            cell1 = Formula._getCellOrLiteral(cells[1])[0]
+            if not isinstance(cell0, CellRef) or not isinstance(cell1, CellRef):
+                raise Exception('Illegal entity in cell range')
+            startCol = min(cell0.col, cell1.col)
+            endCol = max(cell0.col, cell1.col)
+            startRow = min(cell0.row, cell1.row)
+            endRow = max(cell0.row, cell1.row)
+
+            cellsInRange = []
+            for row in range(startRow, endRow + 1):
+                for col in range(startCol, endCol + 1):
+                    cellsInRange.append(CellRef(row, col))
+            return cellsInRange
 
         hasRowNum = True
         for char in text[1:]:
