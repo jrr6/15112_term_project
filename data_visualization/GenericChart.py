@@ -10,6 +10,7 @@ from modular_graphics.input_elements import DoubleClickable
 
 class GenericChart(DoubleClickable, UIElement):
     def __init__(self, name, x, y, props):
+        from ui_components import SpreadsheetGrid
         super().__init__(name, x, y, props)
 
         self.kTitleFont = '"Andale Mono" 14'
@@ -39,9 +40,12 @@ class GenericChart(DoubleClickable, UIElement):
         self.kBottomLabelHeight = 15
 
         # drag tracking
-        self.kDragThreshold = 0.01
-        self.lastX = None
-        self.lastY = None
+        self.kColDragThreshold = 50 / SpreadsheetGrid.colWidth
+        self.kRowDragThreshold = 50 / SpreadsheetGrid.rowHeight
+        self.startX = None
+        self.startY = None
+        self.startRow = None
+        self.startCol = None
 
         if 'data' not in props or not isinstance(self.props['data'], ChartData):
             raise Exception('Invalid or missing data passed to chart.')
@@ -241,8 +245,10 @@ class GenericChart(DoubleClickable, UIElement):
         return lo, hi
 
     def onClick(self, event):
-        self.lastX = None
-        self.lastY = None
+        self.startX = event.x
+        self.startY = event.y
+        self.startRow = self.props['data'].row
+        self.startCol = self.props['data'].col
         from ui_components.ChartConfiguration import ChartConfiguration
         if self.isDoubleClick():
             if 'onConfigure' in self.props:
@@ -253,21 +259,10 @@ class GenericChart(DoubleClickable, UIElement):
 
     def onDrag(self, event):
         from ui_components import SpreadsheetGrid
-        if (self.lastX, self.lastY) == (None, None):
-            self.lastX = event.x
-            self.lastY = event.y
 
-        drow = ((event.y - self.lastY) / SpreadsheetGrid.rowHeight)
-        dcol = ((event.x - self.lastX) / SpreadsheetGrid.colWidth)
+        newRow = self.startRow + (event.y - self.startY)\
+                 / SpreadsheetGrid.rowHeight
+        newCol = self.startCol + (event.x - self.startX)\
+                 / SpreadsheetGrid.colWidth
 
-        newRow, newCol = None, None
-        curRow, curCol = self.props['data'].row, self.props['data'].col
-
-        if abs(drow) > self.kDragThreshold:
-            newRow = curRow + drow
-            self.lastY = event.y
-        if abs(dcol) > self.kDragThreshold:
-            newCol = curCol + dcol
-            self.lastX = event.x
-
-        self.props['onMove'](self, (newRow or curCol, newCol or curCol))
+        self.props['onMove'](self, (newRow, newCol))

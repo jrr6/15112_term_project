@@ -36,11 +36,13 @@ class SpreadsheetScene(UIElement):
         gridY = toolbar.getHeight() + 10
         grid = SpreadsheetGrid('grid', gridX, gridY)
         self.appendChild(grid)
+
+        # UI scaffolding to hide off-screen charts
         self.appendChild(Rectangle('left-hider', 0, 0,
                                    width=gridX, height=self.height,
                                    fill='white', borderColor=''))
         self.appendChild(Rectangle('right-hider', gridX + grid.getWidth() + 1,
-                                   gridY, height=self.height,
+                                   0, height=self.height,
                                    width=self.width - grid.getWidth(),
                                    fill='white', borderColor=''))
         self.appendChild(Rectangle('top-hider', 0, 0,
@@ -52,6 +54,7 @@ class SpreadsheetScene(UIElement):
                                    height=self.height - grid.getHeight(),
                                    fill='white', borderColor=''))
 
+        # append the toolbar last so it sits atop scaffolding
         self.appendChild(toolbar)
 
         # CHART TESTING CODE

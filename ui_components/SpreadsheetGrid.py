@@ -10,7 +10,7 @@ from data_visualization import ChartType, Series, LineChart, ChartData, \
     BarChart, PieChart, ScatterChart
 from formulae import Cell, CellRef, Formula, Operator
 from modular_graphics import UIElement
-from modular_graphics.atomic_elements import Rectangle
+from modular_graphics.atomic_elements import Rectangle, Line
 from ui_components.UICell import UICell
 from ui_components.WebImporter import WebImporter, Table
 
@@ -46,6 +46,10 @@ class SpreadsheetGrid(UIElement):
         self.selectedCells = []
         self.highlighted = []
         self.charts = []
+
+    def draw(self, canvas):
+        super().draw(canvas)
+        # canvas.createLine(self.getWidth(), 0, self.getWidth(), self.getHeight(), fill='purple')
 
     def initChildren(self):
         # Order to ensure correct overlapping:
@@ -88,10 +92,12 @@ class SpreadsheetGrid(UIElement):
                                 width=self.getWidth(), height=self.rowHeight,
                                 fill='white', editable=False, visibleChars=115))
 
-        # cover the corner
+        # UI scaffolding: cover the corner and ensure right line stays
         self.appendChild(Rectangle('hider', 0, 0, width=self.siderWidth,
                                    height=self.rowHeight, fill='white',
                                    borderColor=''))
+        self.appendChild(Line('right-line', self.getWidth(), 0,
+                              angle=90, length=self.getHeight()))
 
         # headers/siders
         for headerNum in range(self.numCols):
@@ -416,6 +422,8 @@ class SpreadsheetGrid(UIElement):
         return True
 
     def insertChart(self, chartType: ChartType):
+        if len(self.selectedCells) == 0:
+            return
         # prepare refs for cells
         colRefs = {}
         for cell in self.selectedCells:
@@ -519,6 +527,9 @@ class SpreadsheetGrid(UIElement):
             i += 1
 
     def moveChart(self, sender, coords):
+        # hackily account for the fact that events propagate down rather than up
+        self.deselectAllCellsButSender(None)
+
         i = 0
         while i < len(self.charts):
             if self.charts[i].ident == sender.props['data'].ident:

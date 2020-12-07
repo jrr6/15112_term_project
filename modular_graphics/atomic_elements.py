@@ -2,6 +2,7 @@
 # Joseph Rotella (jrotella, F0)
 #
 # Contains "atomic" UI elements that interact directly with the canvas.
+import math
 from typing import Union
 
 from PIL import ImageTk
@@ -43,6 +44,30 @@ class Text(UIElement):
         return 0
 
     def getWidth(self):
+        return 0
+
+
+class Line(UIElement):
+    def __init__(self, name, x, y, **props):
+        super().__init__(name, x, y, props)
+
+    def draw(self, canvas):
+        length = self.props.get('length', 0)
+        angle = self.props.get('angle', 0)
+
+        x1 = length * math.cos(math.radians(angle))
+        y1 = length * math.sin(math.radians(angle))
+
+        width = self.props.get('width', None)
+        fill = self.props.get('fill', None)
+
+        canvas.createLine(0, 0, x1, y1, width=width, fill=fill)
+
+    # users won't directly interact with lines, so this is fine
+    def getWidth(self):
+        return 0
+
+    def getHeight(self):
         return 0
 
 class Image(UIElement):

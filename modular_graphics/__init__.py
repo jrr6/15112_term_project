@@ -39,6 +39,7 @@ class RelativeCanvas(object):
     def createImage(self, x, y, **kwargs):
         self.canvas.create_image(x + self.x, y + self.y, **kwargs)
 
+
 class UIElement(ABC):
     def __init__(self, name, x, y, props):
         self.name = name
@@ -190,8 +191,8 @@ class App(CMUApp, UIElement):
             eventStartX = event.x
             eventStartY = event.y
 
-        if element.name.find('chart') > -1:
-            print(self.dragStart)
+        # TODO: This causes charts to "lose" their drag when they move
+        #       too far (they stop covering the original click point)
         if (element.x <= eventStartX <= element.x + element.getWidth() and
                 element.y <= eventStartY <= element.y + element.getHeight()):
             # This would be easier with copy.(deep)copy, but we get pickling
