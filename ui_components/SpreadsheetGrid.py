@@ -155,7 +155,6 @@ class SpreadsheetGrid(UIElement):
             cell.rerender()
 
     def scroll(self, direction):
-        # TODO: Figure out why charts "snap" on scroll
         # save current cell if we're in one
         if self.activeCell:
             self.activeCell.finishEditing()
@@ -324,7 +323,6 @@ class SpreadsheetGrid(UIElement):
             for formula in [count, sumVal, mean, mode, minVal, maxVal]:
                 try:
                     res = formula.evaluate()
-                    print(formula.operator.name, res)
                     summaryText += (formula.operator.name + '='
                                     + str(res) + '   ')
                 except:
@@ -525,7 +523,12 @@ class SpreadsheetGrid(UIElement):
         while i < len(self.charts):
             if self.charts[i].ident == sender.props['data'].ident:
                 self.charts[i].row, self.charts[i].col = coords
-                sender.x, sender.y = self.getChartCoords(self.charts[i])
+                # ACK! We're breaking the #1 rule here (components should never
+                # need to know their own position on screen), but I can't think
+                # of a better way to do this.
+                relCoords = self.getChartCoords(self.charts[i])
+                sender.x = relCoords[0] + self.x
+                sender.y = relCoords[1] + self.y
                 return
             i += 1
 

@@ -265,9 +265,9 @@ class GenericChart(DoubleClickable, UIElement):
 
         if abs(drow) > self.kDragThreshold:
             newRow = curRow + drow
-            self.lastX = event.x
+            self.lastY = event.y
         if abs(dcol) > self.kDragThreshold:
             newCol = curCol + dcol
-            self.lastY = event.y
+            self.lastX = event.x
 
         self.props['onMove'](self, (newRow or curCol, newCol or curCol))
