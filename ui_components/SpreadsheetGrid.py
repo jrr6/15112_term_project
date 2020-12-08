@@ -32,8 +32,8 @@ class Direction(Enum):
             return None
 
 class SpreadsheetGrid(UIElement):
-    rowHeight = 25
-    colWidth = 115
+    rowHeight = 30
+    colWidth = 140
 
     def __init__(self, name, x, y, **props):
         super().__init__(name, x, y, props)

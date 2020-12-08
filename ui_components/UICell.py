@@ -11,6 +11,7 @@ from modular_graphics import UIElement
 from modular_graphics.input_elements import DoubleClickable
 
 
+# TODO: This should really be a subclass of TextField
 class UICell(DoubleClickable, UIElement):
     def __init__(self, name, x, y, **props):
         super().__init__(name, x, y, props)
@@ -22,10 +23,10 @@ class UICell(DoubleClickable, UIElement):
         # State
         self.active = False
         self.selected = False
-        self.height = props.get('height', 25)
-        self.width = props.get('width', 100)
+        self.height = props['height']
+        self.width = props['width']
         # TODO: Actually compute visibleChars using width/font?
-        self.visibleChars = props.get('visibleChars', 13)
+        self.visibleChars = props.get('visibleChars', 16)
         self.text = props.get('text', '')
         self.formulaOutput = props.get('output', None)
 
@@ -39,13 +40,13 @@ class UICell(DoubleClickable, UIElement):
             textAnchor = 'center'
         else:  # align left
             textX = self.paddingX
-            textY = self.paddingY
-            textAnchor = 'nw'
+            textY = self.height // 2
+            textAnchor = 'w'
 
         self.appendChild(Rectangle('border', 0, 0, width=self.width,
                                    height=self.height, fill=fill))
         self.appendChild(Text('placeholder', 10, 5, text=placeholder,
-                              fill='gray', anchor='nw'))
+                              fill='gray', anchor=textAnchor))
         self.appendChild(Text('input', textX, textY,
                               text='', anchor=textAnchor))
         # populate input with correct clipping
