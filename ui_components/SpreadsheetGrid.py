@@ -348,31 +348,7 @@ class SpreadsheetGrid(UIElement):
                 if self.isLegalScrollPos(nextRow, nextCol):
                     self.scroll(arrowDir)
             else:
-                if self.selectedCells == []:
-                    return
-                prevSelection = self.selectedCells[0]
-                prevRow, prevCol = SpreadsheetGrid.rowColFromCellName(
-                    prevSelection.name)
-                nextRow, nextCol = prevRow + drow, prevCol + dcol
-
-                # NOTE: we only clear all selected AFTER we verify legality
-                if (0 <= nextRow < self.numRows
-                        and 0 <= nextCol < self.numCols):
-                    # if the cell is on screen, just move to it
-                    self.deselectAllCellsButSender(None)  # clear old selection
-                    self.getChild(f'{nextRow},{nextCol}').select()
-                else:
-                    # if the cell is off-screen, make sure it's legal and scroll
-                    scrollRow = self.curTopRow + drow
-                    scrollCol = self.curLeftCol + dcol
-                    if self.isLegalScrollPos(scrollRow, scrollCol):
-                        self.deselectAllCellsButSender(
-                            None)  # clear old selection
-                        self.scroll(arrowDir)
-                        self.getChild(prevSelection.name).select()
-                    elif len(self.selectedCells) > 1:
-                        # standard behavior is to reduce selection to 1
-                        self.deselectAllCellsButSender(self.selectedCells[0])
+                self.navigate(arrowDir)
 
         if event.key == 'i' and event.commandDown:
             self.startImport()
@@ -385,8 +361,45 @@ class SpreadsheetGrid(UIElement):
         elif event.key == 'b' and event.commandDown:
             self.insertChart(ChartType.BAR)
 
+    def navigate(self, arrowDir):
+        if self.selectedCells == []:
+            return
+        drow, dcol = arrowDir.value
+        prevSelection = self.selectedCells[0]
+        prevRow, prevCol = SpreadsheetGrid.rowColFromCellName(
+            prevSelection.name)
+        nextRow, nextCol = prevRow + drow, prevCol + dcol
+
+        # NOTE: we only clear all selected AFTER we verify legality
+        if 0 <= nextRow < self.numRows and 0 <= nextCol < self.numCols:
+            # if the cell is on screen, just move to it
+            self.deselectAllCellsButSender(None)  # clear old selection
+            self.getChild(f'{nextRow},{nextCol}').select()
+        else:
+            # if the cell is off-screen, make sure it's legal and scroll
+            scrollRow = self.curTopRow + drow
+            scrollCol = self.curLeftCol + dcol
+            if self.isLegalScrollPos(scrollRow, scrollCol):
+                self.deselectAllCellsButSender(None)  # clear old selection
+                self.scroll(arrowDir)
+                self.getChild(prevSelection.name).select()
+            elif len(self.selectedCells) > 1:
+                # standard behavior is to reduce selection to 1
+                self.deselectAllCellsButSender(self.selectedCells[0])
+
     def isLegalScrollPos(self, row, col):
         return 0 <= row and 0 <= col < 26 - self.numCols + 1
+
+    # TODO: finish implementing
+    def transposeSelection(self):
+        selectedPositions = [self.absRowColFromCellName(cell.name)
+                             for cell in self.selectedCells]
+        current = {}
+        for pos in selectedPositions:
+            current[pos] = Cell.getRaw(*pos)
+
+        for pos in current:
+            Cell.setRaw(pos[0], pos[1], current[pos[1], pos[0]])
 
     def startImport(self):
         if len(self.selectedCells) == 0:

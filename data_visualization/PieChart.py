@@ -8,12 +8,14 @@ class PieChart(GenericChart):
         self.kMinPctLabel = 0.05
 
     def drawChart(self, canvas):
+        chartData = self.props['data']
+        depSeries = chartData.dependentSeries
+        if len(depSeries) == 0:
+            raise Exception('Cannot draw pie chart with no data!')
         self.drawBGAndTitle(canvas)
         self.drawKey(canvas)
 
         # draw wedges
-        chartData = self.props['data']
-        depSeries = chartData.dependentSeries
         # just extract the first datum from each dependent series
         seriesData = list(map(lambda x: x.evaluatedData()[0], depSeries))
         total = sum(seriesData)

@@ -17,6 +17,7 @@ class SpreadsheetScene(UIElement):
     kChartDelimiter = '/'
 
     def __init__(self):
+        # TODO: This could probably be even bigger
         self.width = 1020
         self.height = 720
         super().__init__('scene', 0, 0, {})
