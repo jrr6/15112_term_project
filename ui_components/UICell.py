@@ -67,7 +67,6 @@ class UICell(DoubleClickable, UIElement):
             self.select(modifier=modifier)
 
     def select(self, silent=False, modifier=None):
-        print('select', self.name)
         # only editable cells meaningfully convey "selection" feedback
         if self.props.get('editable', True):
             self.selected = True
@@ -92,7 +91,6 @@ class UICell(DoubleClickable, UIElement):
 
     # deselects the cell
     def deselect(self, silent=False):
-        print('deselect', self.name)
         self.selected = False
         self.resetDoubleClick()  # don't jump to activation if clicked again
         self.resignKeyListener()
