@@ -15,22 +15,6 @@ from ui_components.UICell import UICell
 from ui_components.WebImporter import WebImporter, Table
 
 
-class Direction(Enum):
-    RIGHT = (0, 1)
-    LEFT = (0, -1)
-    UP = (-1, 0)
-    DOWN = (1, 0)
-
-    @staticmethod
-    def fromKey(keyStr):
-        upper = keyStr.upper()
-        if upper in Direction.__members__:
-            return Direction[upper]
-        elif upper == 'TAB':
-            return Direction.RIGHT
-        else:
-            return None
-
 class SpreadsheetGrid(UIElement):
     rowHeight = 30
     colWidth = 120
@@ -154,12 +138,8 @@ class SpreadsheetGrid(UIElement):
         self.updatePreview()
 
     def renderCell(self, row, col, explicitRerender=True):
-        childRow, childCol = row - self.curTopRow, col - self.curLeftCol
-        cell = self.getChild(f'{childRow},{childCol}')
-        try:
-            cell.setOutputText(str(Cell.getValue(row, col)))
-        except:
-            cell.setOutputText('RUNTIME-ERROR')
+        cell = self.getChildForAbsRowCol(row, col)
+        cell.setOutputText(str(Cell.getValue(row, col)))
         if explicitRerender:
             cell.rerender()
 
@@ -239,9 +219,7 @@ class SpreadsheetGrid(UIElement):
         for depRef in Cell.getShallowDependencies(row, col):
             if self.absPosIsVisible(depRef.row, depRef.col):
                 print('highlighting dep', depRef)
-                depRow, depCol = (depRef.row - self.curTopRow,
-                                  depRef.col - self.curLeftCol)
-                child = self.getChild(f'{depRow},{depCol}')
+                child = self.getChildForAbsRowCol(depRef.row, depRef.col)
                 child.highlight('orange')
                 self.highlighted.append(child)
 
@@ -420,8 +398,11 @@ class SpreadsheetGrid(UIElement):
                     trgCol = upperLeft.col + row
                     # swap transposed cells, or clear out ones that were
                     # part of the original but aren't part of the transpose
-                    Cell.setRaw(trgRow, trgCol,
-                                oldValues.get((srcRow, srcCol), ''))
+                    newVal = oldValues.get((srcRow, srcCol), '')
+                    # setRaw takes care of formula updating for us
+                    Cell.setRaw(trgRow, trgCol, newVal)
+                    self.getChildForAbsRowCol(trgRow, trgCol).setText(newVal)
+                    self.renderCell(*self.relRowColFromAbs(trgRow, trgCol))
 
     def startImport(self):
         if len(self.selectedCells) == 0:
@@ -449,9 +430,7 @@ class SpreadsheetGrid(UIElement):
                     text = text[1:]
                 Cell.setRaw(curRow, curCol, text)
                 if self.absPosIsVisible(curRow, curCol):
-                    relRow = curRow - self.curTopRow
-                    relCol = curCol - self.curLeftCol
-                    uiCell = self.getChild(f'{relRow},{relCol}')
+                    uiCell = self.getChildForAbsRowCol(curRow, curCol)
                     uiCell.setOutputText(None)
                     uiCell.setText(text)
                 curCol += 1
@@ -553,7 +532,8 @@ class SpreadsheetGrid(UIElement):
             ChartType.SCATTER: ScatterChart,
             ChartType.BAR: BarChart
         }
-        # TODO: We can simplify this and other event methods significantly by simply passing identifiers from the caller
+        # TODO: We can simplify this and other event methods significantly
+        #       by simply passing identifiers from the caller
         self.appendBefore(chartTypeMap[chartData.chartType](
             f'chart{chartData.ident}',
             x, y, data=chartData,
@@ -627,6 +607,16 @@ class SpreadsheetGrid(UIElement):
         self.removeAllChildren()
         self.initChildren()
 
+    # returns the child cell for an absolute cell position, or None if
+    # the specified cell is not currently on screen
+    def getChildForAbsRowCol(self, row, col):
+        relRow, relCol = self.relRowColFromAbs(row, col)
+        return self.getChild(f'{relRow},{relCol}')
+
+    # returns the relative position of an absolute cell location
+    def relRowColFromAbs(self, row, col):
+        return row - self.curTopRow, col - self.curLeftCol
+
     # returns row and column for cell with given name.
     # if name doesn't represent a body cell (e.g., header/sider/preview),
     # returns -1, -1
@@ -646,3 +636,19 @@ class SpreadsheetGrid(UIElement):
     def absPosIsVisible(self, row, col):
         return (self.curLeftCol <= col < self.curLeftCol + self.numCols and
                 self.curTopRow <= row < self.curTopRow + self.numRows)
+
+class Direction(Enum):
+    RIGHT = (0, 1)
+    LEFT = (0, -1)
+    UP = (-1, 0)
+    DOWN = (1, 0)
+
+    @staticmethod
+    def fromKey(keyStr):
+        upper = keyStr.upper()
+        if upper in Direction.__members__:
+            return Direction[upper]
+        elif upper == 'TAB':
+            return Direction.RIGHT
+        else:
+            return None

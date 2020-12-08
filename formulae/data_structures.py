@@ -67,12 +67,14 @@ class DependencyGraph(object):
             del self.dependents[cellRef]
 
     def getDependents(self, cellRef):
-        if not cellRef in self.dependents:
+        if cellRef not in self.dependents:
             return set()
 
         dependents = self.dependents[cellRef]
         for dependent in dependents:
-            dependents = dependents.union(self.getDependents(dependent))
+            # we catch infinite recursion only at runtime -- don't do it here!
+            if dependent is not cellRef:
+                dependents = dependents.union(self.getDependents(dependent))
         return dependents
 
     # Gets only the first layer of dependencies of a given cell

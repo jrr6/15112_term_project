@@ -107,7 +107,10 @@ class Cell(object):
     # Returns computed value of cell (with appropriate type/formula result)
     def value(self):
         if self.formula:
-            return self.formula.evaluate()
+            try:
+                return self.formula.evaluate()
+            except:
+                return 'RUNTIME-ERROR'
         else:
             try:
                 return int(self.raw)
