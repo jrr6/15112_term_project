@@ -260,6 +260,7 @@ class GenericChart(DoubleClickable, UIElement):
     def onDrag(self, event):
         from ui_components import SpreadsheetGrid
 
+        # TODO: This seems to be crashing with multiple charts
         newRow = self.startRow + (event.y - self.startY)\
                  / SpreadsheetGrid.rowHeight
         newCol = self.startCol + (event.x - self.startX)\

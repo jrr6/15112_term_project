@@ -46,6 +46,9 @@ class SpreadsheetGrid(UIElement):
         self.selectedCells = []
         self.highlighted = []
         self.charts = []
+        self.dragStartX = 0
+        self.dragStartY = 0
+        self.dragThreshold = 2
 
     def draw(self, canvas):
         super().draw(canvas)
@@ -440,35 +443,43 @@ class SpreadsheetGrid(UIElement):
         cols = sorted(colRefs.keys())
 
         # TODO: Dynamically determine whether to include titles
-        # depTitles = False  # whether dependent series are labeled with titles
-        # upperLeftValue = colRefs[cols[0]][0].getValue()  # avoid recomputing
-        # if upperLeftValue.isdigit():
-        #     indTitle = ''
-        #     depTitles = False
-        # else:
-        #     indTitle = upperLeftValue
-        #     colRefs[cols[0]].pop(0)  # don't use the title in the series
-        #     depTitles = True
-        #
-        # if type == ChartType.PIE or type == ChartType.BAR:
-        #     nextPossibleHeader = colRefs[cols[1]][0].getValue()
-        #     # if the first dep col has no header, none of them does
-        #     if nextPossibleHeader.isdigit():
-        #         depTitles = True
+        # depTitles = True  # whether dependent series are labeled with titles
+        upperLeftValue = str(colRefs[cols[0]][0].getValue())  # avoid recomputing
+        if upperLeftValue.isdigit():
+            useTitles = False
+            depTitles = False
+        else:
+            useTitles = True
+            depTitles = True
+            if chartType == ChartType.PIE:
+                firstCol = colRefs[cols[0]]
+                if len(firstCol) > 1:
+                    nextPossibleHeader = str(firstCol[1].getValue())
+                    # if the first dep col has a header, assume they all do
+                    if nextPossibleHeader.isdigit():
+                        depTitles = False
+
+        print(useTitles, depTitles)
 
         indSeries = None
         depSeries = []
         titles = []
         for i in range(len(cols)):
-            title = colRefs[cols[i]][0]
-            data = colRefs[cols[i]][1:]
-            series = Series(title, data)
-            titles.append(str(title.getValue()))
-            if i == 0:
+            if useTitles:
+                title = colRefs[cols[i]][0]
+                data = colRefs[cols[i]][1:]
+                series = Series(title, data)
+                titles.append(str(title.getValue()))
+            else:
+                data = colRefs[cols[i]]
+                series = Series(None, data)
+
+            if i == 0 and depTitles:  # note: pie charts don't need ind series
                 indSeries = series
             else:
                 depSeries.append(series)
 
+        # TODO: Right now empty titles are still empty strings, so this fails
         if len(titles) == 0:
             defaultTitle = 'New Chart'
         elif len(titles) == 1:
@@ -543,8 +554,18 @@ class SpreadsheetGrid(UIElement):
                 return
             i += 1
 
+    def onClick(self, event):
+        self.dragStartX = event.x
+        self.dragStartY = event.y
+
     def onDrag(self, event):
         x, y = event.x, event.y
+
+        if (abs(x - self.dragStartX) < self.dragThreshold
+                and abs(y - self.dragStartY) < self.dragThreshold):
+            # avoid being too sensitive
+            return
+
         row = int((y - self.rowHeight) / self.rowHeight)
         col = int((x - self.siderWidth) / self.colWidth)
         if 0 <= row < self.numRows and 0 <= col < self.numCols:

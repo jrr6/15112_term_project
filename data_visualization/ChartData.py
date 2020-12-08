@@ -21,7 +21,10 @@ class Series:
 
     @property
     def title(self):
-        return self._titleRef.getValue()
+        if self._titleRef:
+            return self._titleRef.getValue()
+        else:
+            return ''
 
     def dataLength(self):
         return len(self._data)

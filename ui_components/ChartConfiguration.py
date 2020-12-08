@@ -93,6 +93,8 @@ class ChartConfiguration(ModalView):
                                    placeholder=None, **extraArgs))
 
     def onSave(self, _):
+        # TODO: For some reason, saving charts occasionally makes them "jump"
+
         chartData = self.props['data']
 
         xMin = self.getChild('xmin').text
