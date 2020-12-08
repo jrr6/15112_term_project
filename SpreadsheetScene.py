@@ -18,7 +18,9 @@ class SpreadsheetScene(UIElement):
 
     def __init__(self):
         # TODO: This could probably be even bigger
-        self.width = 1020
+        self.kGridX = 5
+        self.width = 2 * self.kGridX + SpreadsheetGrid.siderWidth\
+                     + SpreadsheetGrid.numCols * SpreadsheetGrid.colWidth
         self.height = 720
         super().__init__('scene', 0, 0, {})
 
@@ -36,7 +38,7 @@ class SpreadsheetScene(UIElement):
                           self.getChild('grid').transposeSelection(),
                           help=lambda: None)  # TODO: create help screen
 
-        gridX = 5
+        gridX = self.kGridX
         gridY = toolbar.getHeight() + 10
         grid = SpreadsheetGrid('grid', gridX, gridY)
         self.appendChild(grid)

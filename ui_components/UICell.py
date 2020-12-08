@@ -26,7 +26,7 @@ class UICell(DoubleClickable, UIElement):
         self.height = props['height']
         self.width = props['width']
         # TODO: Actually compute visibleChars using width/font?
-        self.visibleChars = props.get('visibleChars', 16)
+        self.visibleChars = props.get('visibleChars', 14)
         self.text = props.get('text', '')
         self.formulaOutput = props.get('output', None)
 
