@@ -187,14 +187,25 @@ class App(CMUApp, UIElement):
         propagateToChildren = True
         if evtType == EventType.DRAG:
             eventStartX, eventStartY = self.dragStart
+            # Hacky workaround so that dragging charts works
+            if 'startX' in element.__dict__:
+                elementX = element.startX
+            else:
+                elementX = element.x
+            if 'startY' in element.__dict__:
+                elementY = element.startY
+            else:
+                elementY = element.y
         else:
             eventStartX = event.x
             eventStartY = event.y
+            elementX = element.x
+            elementY = element.y
 
         # TODO: This causes charts to "lose" their drag when they move
         #       too far (they stop covering the original click point)
-        if (element.x <= eventStartX <= element.x + element.getWidth() and
-                element.y <= eventStartY <= element.y + element.getHeight()):
+        if (elementX <= eventStartX <= elementX + element.getWidth() and
+                elementY <= eventStartY <= elementY + element.getHeight()):
             # This would be easier with copy.(deep)copy, but we get pickling
             # errors
             oldX = event.x

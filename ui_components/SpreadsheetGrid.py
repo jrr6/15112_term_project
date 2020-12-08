@@ -559,8 +559,8 @@ class SpreadsheetGrid(UIElement):
                 # need to know their own position on screen), but I can't think
                 # of a better way to do this.
                 relCoords = self.getChartCoords(self.charts[i])
-                sender.x = relCoords[0] + self.x
-                sender.y = relCoords[1] + self.y
+                sender.x = int(relCoords[0] + self.x)
+                sender.y = int(relCoords[1] + self.y)
                 return
             i += 1
 

@@ -248,8 +248,12 @@ class GenericChart(DoubleClickable, UIElement):
         return lo, hi
 
     def onClick(self, event):
-        self.startX = event.x
-        self.startY = event.y
+        # This is terrible and breaks all the rules about not needing to know
+        # absolute coords, but there doesn't seem to be a better way to handle
+        # the fact that we need to be aware of the larger canvas for dragging
+        # to work
+        self.startX = event.x + self.x
+        self.startY = event.y + self.y
         self.startRow = self.props['data'].row
         self.startCol = self.props['data'].col
         from ui_components.ChartConfiguration import ChartConfiguration
@@ -264,9 +268,10 @@ class GenericChart(DoubleClickable, UIElement):
         from ui_components import SpreadsheetGrid
 
         # TODO: This seems to be crashing with multiple charts
-        newRow = self.startRow + (event.y - self.startY)\
+        # again, work in absolute coords (sigh)
+        newRow = self.startRow + (event.y + self.y - self.startY)\
             / SpreadsheetGrid.rowHeight
-        newCol = self.startCol + (event.x - self.startX)\
+        newCol = self.startCol + (event.x + self.x - self.startX)\
             / SpreadsheetGrid.colWidth
 
         self.props['onMove'](self, (newRow, newCol))
