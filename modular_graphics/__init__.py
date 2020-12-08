@@ -186,6 +186,11 @@ class App(CMUApp, UIElement):
         inBounds = False
         propagateToChildren = True
         if evtType == EventType.DRAG:
+            if self.dragStart is None:
+                # this shouldn't happen (i.e., we should always get clicks
+                # before drags), but somehow it does... let's just assume we
+                # can't trust 112_graphics
+                self.dragStart = (event.x, event.y)
             eventStartX, eventStartY = self.dragStart
             # Hacky workaround so that dragging charts works
             if 'startX' in element.__dict__:

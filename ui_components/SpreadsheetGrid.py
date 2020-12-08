@@ -56,7 +56,7 @@ class SpreadsheetGrid(UIElement):
                 existingText = Cell.getRaw(cellRow, cellCol)
                 if Cell.hasFormula(cellRow, cellCol):
                     existingOutput = str(Cell.getValue(cellRow, cellCol))
-                elif Cell.getValue(cellRow, cellCol)[0:1] == '=':
+                elif str(Cell.getValue(cellRow, cellCol))[0:1] == '=':
                     # if it should have a formula but doesn't, it failed to
                     # parse
                     existingOutput = 'SYNTAX-ERROR'
