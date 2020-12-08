@@ -47,7 +47,10 @@ class Series:
             return self._data[index]
 
     def serialize(self):
-        result = f'{self._titleRef.serialize()},'
+        result = ''
+        if self._titleRef:
+            result += self._titleRef.serialize()
+        result += ','
         if self.color is not None and ',' not in self.color:
             result += f'{self.color}'
         result += ','
@@ -59,7 +62,10 @@ class Series:
     @staticmethod
     def deserialize(data):
         entities = data.split(',')
-        titleRef = CellRef.deserialize(entities[0])
+        if entities[0] != '':
+            titleRef = CellRef.deserialize(entities[0])
+        else:
+            titleRef = None
         color = entities[1] if entities[1] != '' else None
         data = []
         for entity in entities[2:]:

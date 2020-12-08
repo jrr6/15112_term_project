@@ -443,23 +443,21 @@ class SpreadsheetGrid(UIElement):
         cols = sorted(colRefs.keys())
 
         # TODO: Dynamically determine whether to include titles
-        # depTitles = True  # whether dependent series are labeled with titles
-        upperLeftValue = str(colRefs[cols[0]][0].getValue())  # avoid recomputing
+        upperLeftValue = str(colRefs[cols[0]][0].getValue())
         if upperLeftValue.isdigit():
             useTitles = False
-            depTitles = False
         else:
             useTitles = True
-            depTitles = True
-            if chartType == ChartType.PIE:
-                firstCol = colRefs[cols[0]]
-                if len(firstCol) > 1:
-                    nextPossibleHeader = str(firstCol[1].getValue())
-                    # if the first dep col has a header, assume they all do
-                    if nextPossibleHeader.isdigit():
-                        depTitles = False
-
-        print(useTitles, depTitles)
+            # Being able to have pie charts without titles is fairly useless
+            # and certainly much more of a headache than it's worth -- leaving
+            # here just in case, though
+            # if chartType == ChartType.PIE:
+            #     firstCol = colRefs[cols[0]]
+            #     if len(firstCol) > 1:
+            #         nextPossibleHeader = str(firstCol[1].getValue())
+            #         # if the first dep col has a header, assume they all do
+            #         if nextPossibleHeader.isdigit():
+            #             depTitles = False
 
         indSeries = None
         depSeries = []
@@ -474,12 +472,11 @@ class SpreadsheetGrid(UIElement):
                 data = colRefs[cols[i]]
                 series = Series(None, data)
 
-            if i == 0 and depTitles:  # note: pie charts don't need ind series
+            if i == 0:
                 indSeries = series
             else:
                 depSeries.append(series)
 
-        # TODO: Right now empty titles are still empty strings, so this fails
         if len(titles) == 0:
             defaultTitle = 'New Chart'
         elif len(titles) == 1:
