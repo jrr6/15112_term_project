@@ -261,16 +261,33 @@ class SpreadsheetGrid(UIElement):
 
     # Selects a "block" of cells (i.e., shift-select)
     def blockSelect(self, sender):
+        if len(self.selectedCells) == 0:
+            return
         pivotCell = self.selectedCells[0]
         self.deselectAllCellsButSender(sender, startIndex=1)
         self.selectedCells = [pivotCell]
         pivRow, pivCol = SpreadsheetGrid.rowColFromCellName(
             pivotCell.name)
         selRow, selCol = SpreadsheetGrid.rowColFromCellName(sender.name)
-        minRow, minCol = min(pivRow, selRow), min(pivCol, selCol)
-        maxRow, maxCol = max(pivRow, selRow), max(pivCol, selCol)
-        for row in range(minRow, maxRow + 1):
-            for col in range(minCol, maxCol + 1):
+        # we need to select from pivot to sel so that the original (i.e., user)
+        # selection order is preserved
+        # use "row adjustment" to ensure we're inclusive on the "upper" bound
+        if pivRow > selRow:
+            rowStep = -1
+            rowAdj = -1
+        else:
+            rowStep = +1
+            rowAdj = +1
+
+        if pivCol > selCol:
+            colStep = -1
+            colAdj = -1
+        else:
+            colStep = +1
+            colAdj = +1
+
+        for row in range(pivRow, selRow + rowAdj, rowStep):
+            for col in range(pivCol, selCol + colAdj, colStep):
                 # The pivot is already in there, so don't re-add it
                 # (Note that sender *isn't* in there yet, so it's fine.)
                 if not (row == pivRow and col == pivCol):
@@ -326,7 +343,7 @@ class SpreadsheetGrid(UIElement):
                 if self.isLegalScrollPos(nextRow, nextCol):
                     self.scroll(arrowDir)
             else:
-                self.navigate(arrowDir)
+                self.navigate(arrowDir, blockSelect=event.shiftDown)
         elif event.key == 'i' and event.commandDown:
             self.startImport()
         elif event.key == 'l' and event.commandDown:
@@ -340,11 +357,14 @@ class SpreadsheetGrid(UIElement):
         elif event.key == 'r' and event.commandDown:
             self.transposeSelection()
 
-    def navigate(self, arrowDir):
+    def navigate(self, arrowDir, blockSelect=False):
         if self.selectedCells == []:
             return
         drow, dcol = arrowDir.value
-        prevSelection = self.selectedCells[0]
+        if blockSelect:
+            prevSelection = self.selectedCells[-1]
+        else:
+            prevSelection = self.selectedCells[0]
         prevRow, prevCol = SpreadsheetGrid.rowColFromCellName(
             prevSelection.name)
         nextRow, nextCol = prevRow + drow, prevCol + dcol
@@ -352,17 +372,25 @@ class SpreadsheetGrid(UIElement):
         # NOTE: we only clear all selected AFTER we verify legality
         if 0 <= nextRow < self.numRows and 0 <= nextCol < self.numCols:
             # if the cell is on screen, just move to it
-            self.deselectAllCellsButSender(None)  # clear old selection
-            self.getChild(f'{nextRow},{nextCol}').select()
+            if blockSelect:
+                # hacky, but it works
+                self.blockSelect(self.getChild(f'{nextRow},{nextCol}'))
+            else:
+                self.deselectAllCellsButSender(None)  # clear old selection
+                self.getChild(f'{nextRow},{nextCol}').select()
         else:
             # if the cell is off-screen, make sure it's legal and scroll
             scrollRow = self.curTopRow + drow
             scrollCol = self.curLeftCol + dcol
             if self.isLegalScrollPos(scrollRow, scrollCol):
-                self.deselectAllCellsButSender(None)  # clear old selection
-                self.scroll(arrowDir)
-                self.getChild(prevSelection.name).select()
-            elif len(self.selectedCells) > 1:
+                if blockSelect:
+                    self.scroll(arrowDir)
+                    self.blockSelect(self.getChild(prevSelection.name))
+                else:
+                    self.deselectAllCellsButSender(None)  # clear old selection
+                    self.scroll(arrowDir)
+                    self.getChild(prevSelection.name).select()
+            elif len(self.selectedCells) > 1 and not blockSelect:
                 # standard behavior is to reduce selection to 1
                 self.deselectAllCellsButSender(self.selectedCells[0])
 
@@ -589,10 +617,10 @@ class SpreadsheetGrid(UIElement):
         col = int((x - self.siderWidth) / self.colWidth)
         if 0 <= row < self.numRows and 0 <= col < self.numCols:
             # This is a bit hacky, but we're just doing block select!
-            self.getChild(f'{row},{col}').select(modifier='Shift')
-            # We could equivalently do:
-            # self.blockSelect(self.getChild(f'{row},{col}'))
-            # but relying on blockSelect to reselect sender is weird
+            self.blockSelect(self.getChild(f'{row},{col}'))
+            # If we later change block select not to reselect sender,
+            # we could equivalently do:
+            # self.getChild(f'{row},{col}').select(modifier='Shift')
 
     # reloads the grid, fetching cells from Cell and replacing charts with
     # those specified
