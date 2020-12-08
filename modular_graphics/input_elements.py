@@ -145,7 +145,8 @@ class Button(UIElement):
     def initChildren(self):
         if 'text' in self.props:
             self.appendChild(Rectangle('border', 0, 0,
-                                       width=self.width, height=self.height))
+                                       width=self.width, height=self.height,
+                                       fill=self.props.get('fill', None)))
             self.appendChild(Text('label', self.width // 2, self.height // 2,
                                   text=self.props['text']))
         elif 'img' in self.props:

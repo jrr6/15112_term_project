@@ -54,9 +54,14 @@ class SpreadsheetGrid(UIElement):
                 cellCol = colNum + self.curLeftCol
 
                 existingText = Cell.getRaw(cellRow, cellCol)
-                existingOutput = (str(Cell.getValue(cellRow, cellCol))
-                                  if Cell.hasFormula(cellRow, cellCol)
-                                  else None)
+                if Cell.hasFormula(cellRow, cellCol):
+                    existingOutput = str(Cell.getValue(cellRow, cellCol))
+                elif Cell.getValue(cellRow, cellCol)[0:1] == '=':
+                    # if it should have a formula but doesn't, it failed to
+                    # parse
+                    existingOutput = 'SYNTAX-ERROR'
+                else:
+                    existingOutput = None
                 tf = UICell(f'{rowNum},{colNum}', x, y,
                             placeholder='', width=self.colWidth,
                             height=self.rowHeight,

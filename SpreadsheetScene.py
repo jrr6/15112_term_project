@@ -10,7 +10,8 @@ from data_visualization.LineChart import LineChart
 from formulae import Cell
 from modular_graphics import UIElement, App
 from modular_graphics.atomic_elements import Rectangle, Image
-from ui_components import SpreadsheetGrid, Confirmation, FileSelector, Toolbar
+from ui_components import SpreadsheetGrid, Confirmation, FileSelector, Toolbar, \
+    SheetSelector
 
 
 class SpreadsheetScene(UIElement):
@@ -18,11 +19,14 @@ class SpreadsheetScene(UIElement):
 
     def __init__(self):
         # TODO: This could probably be even bigger
-        self.kGridX = 5
-        self.width = 2 * self.kGridX + SpreadsheetGrid.siderWidth\
-                     + SpreadsheetGrid.numCols * SpreadsheetGrid.colWidth
-        self.height = 720
         super().__init__('scene', 0, 0, {})
+        self.kGridX = 5
+        self.kDefaultSheetPrefix = 'Sheet'
+        self.width = 2 * self.kGridX + SpreadsheetGrid.siderWidth\
+            + SpreadsheetGrid.numCols * SpreadsheetGrid.colWidth
+        self.height = 750
+        self.sheets = [Sheet(self.kDefaultSheetPrefix + '1', {}, [])]
+        self.activeSheet = 0
 
     def initChildren(self):
         self.makeKeyListener()
@@ -62,6 +66,12 @@ class SpreadsheetScene(UIElement):
 
         # append the toolbar last so it sits atop scaffolding
         self.appendChild(toolbar)
+        self.appendChild(SheetSelector('sheet-select', gridX,
+                                       gridY + grid.getHeight(),
+                                       sheets=self.sheets,
+                                       active=self.activeSheet,
+                                       onSelect=self.openSheet,
+                                       onAdd=self.createSheet))
 
     def getWidth(self):
         return self.width
@@ -76,6 +86,29 @@ class SpreadsheetScene(UIElement):
             self.open()
         elif event.key == 'n' and event.commandDown:
             self.newDoc()
+
+    def createSheet(self):
+        newIdx = len(self.sheets)
+        name = self.kDefaultSheetPrefix + str(newIdx + 1)
+        self.sheets.append(Sheet(name, {}, []))
+        self.getChild('sheet-select').refresh()
+        self.openSheet(newIdx)
+
+    def openSheet(self, sheetIndex):
+        # save the current sheet
+        self.storeCurrentSheet()
+
+        # open the new sheet
+        Cell.loadRawCells(self.sheets[sheetIndex].cells)
+        self.getChild('grid').reload(self.sheets[sheetIndex].charts)
+        self.activeSheet = sheetIndex
+        self.getChild('sheet-select').props['active'] = sheetIndex
+        self.getChild('sheet-select').refresh()
+
+    # loads the modified sheet contents into the app-level sheets list
+    def storeCurrentSheet(self):
+        self.sheets[self.activeSheet].charts = self.getChild('grid').charts
+        self.sheets[self.activeSheet].cells = Cell.getRawCells()
 
     def newDoc(self):
         curChartsEmpty = len(self.getChild('grid').charts) == 0
@@ -95,20 +128,25 @@ class SpreadsheetScene(UIElement):
         return handler
 
     def resetDoc(self):
-        Cell.overwriteFromData(None)
+        Cell.loadRawCells(None)
         self.getChild('grid').reload([])
 
     def save(self):
-        grid = self.getChild('grid')
-        grid.deselectAllCellsButSender(None)  # hacky, but it works
-        chartObjs = grid.charts
-        charts = ''
-        for chart in chartObjs:
-            # Note that chart serializer escapes chart delimiter for us
-            charts += chart.serialize() + SpreadsheetScene.kChartDelimiter
-        charts = charts[:-1]
-        cells = Cell.serializeAll()
-        data = cells + '\n' + charts
+        self.storeCurrentSheet()
+        self.getChild('grid').deselectAllCellsButSender(None)  # hacky but works
+
+        data = ''
+        for sheet in self.sheets:
+            chartObjs = sheet.charts
+            charts = ''
+            for chart in chartObjs:
+                # Note that chart serializer escapes chart delimiter for us
+                charts += chart.serialize() + SpreadsheetScene.kChartDelimiter
+            charts = charts[:-1]
+            cells = Cell.serializeRaw(sheet.cells)
+            data += sheet.name + '\n' + cells + '\n' + charts + '\n'
+
+        data = data[:-1]  # strip trailing newline to avoid confusion later on
         # TODO: Check if this is an already-opened doc that we can overwrite
         self.runModal(FileSelector(message='Save File',
                                    onSubmit=lambda path, data=data:
@@ -150,29 +188,41 @@ class SpreadsheetScene(UIElement):
                 # other "clever" Python built-ins are a bad idea
                 lines = file.read().split('\n')
 
-                # if it's an empty file, just clear everything
-                if len(lines) == 0:
-                    Cell.overwriteFromData(None)
-                    charts = []
-                else:
-                    Cell.overwriteFromData(lines[0])
-                    # if there are no charts, don't bother parsing
-                    if len(lines) == 1:
-                        charts = []
-                    else:
-                        chartStrs = lines[1].split(SpreadsheetScene.kChartDelimiter)
-                        charts = []
+                curSheetName = ''
+                curSheetCells = []
+                curSheetCharts = []
+                for i in range(len(lines)):
+                    if i % 3 == 0:
+                        # name line
+                        curSheetName = lines[i]
+                    elif i % 3 == 1:
+                        # cells line
+                        curSheetCells = Cell.deserializeRawCells(lines[i])
+                    elif i % 3 == 2:
+                        # charts line
+                        chartStrs = lines[i].split(
+                            SpreadsheetScene.kChartDelimiter)
+                        curSheetCharts = []
                         for chartStr in chartStrs:
                             chart = ChartData.deserialize(chartStr)
                             if chart is not None:
-                                charts.append(chart)
+                                curSheetCharts.append(chart)
+                        self.sheets.append(
+                            Sheet(curSheetName, curSheetCells, curSheetCharts))
 
-                # reload the grid with new data
-                self.getChild('grid').reload(charts)
+                # open the first sheet, which also reloads the grid
+                self.openSheet(0)
         except:
             self.runModal(Confirmation(
                 message=f'The file {path} could not be read.'))
             return
+
+
+class Sheet:
+    def __init__(self, name: str, cells: dict, charts: list):
+        self.name = name
+        self.cells = cells
+        self.charts = charts
 
 if __name__ == '__main__':
     App.load('SimpleSheets', SpreadsheetScene())

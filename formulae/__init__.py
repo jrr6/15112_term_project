@@ -46,7 +46,8 @@ class Cell(object):
             del Cell._cells[row, col]
 
     # Sets raw value of cell as well as formula, if applicable
-    # NOTE: will throw if formula illegal (i.e., syntax error)
+    # By default, will throw if formula illegal. If you REALLY, REALLY promise
+    # to handle the error elsewhere
     @staticmethod
     def setRaw(row, col, text):
         if (row, col) in Cell._cells:
@@ -73,23 +74,50 @@ class Cell(object):
         return Cell._deps.getShallowDependencies(CellRef(row, col))
 
     @staticmethod
-    def serializeAll():
+    def empty():
+        return len(Cell._cells) == 0
+
+    # serializes a raw cell content dictionary, obtainable from
+    # Cell.getRawCells()
+    @staticmethod
+    def serializeRaw(rawCells):
         result = ''
-        for cellLoc in Cell._cells:
-            cell = Cell._cells[cellLoc]
-            escaped = cell.raw.replace(',', '\\,')
+        for cellLoc in rawCells:
+            cellRaw = Cell._cells[cellLoc]
+            escaped = cellRaw.replace(',', '\\,')
             result += f'{cellLoc[0]},{cellLoc[1]},{escaped},'
         result = result[:-1]  # strip trailing comma
         return result
 
+    # returns all current cells as a string dictionary suitable for loading
+    # via loadRawCells()
     @staticmethod
-    def empty():
-        return len(Cell._cells) == 0
+    def getRawCells():
+        rawDict = {}
+        for row, col in Cell._cells:
+            rawDict[row, col] = Cell._cells[row, col].raw
+        return rawDict
 
+    # replaces stored cell data with data from provided cells,
+    # or simply resets all cells if None is passed
     @staticmethod
-    def overwriteFromData(data: Union[str, None]):
+    def loadRawCells(cells: Union[None, dict[tuple[int, int], str]]):
         Cell._cells = {}
         Cell._deps = DependencyGraph()
+        if cells is not None:
+            for row, col in cells:
+                try:
+                    Cell.setRaw(row, col, cells[row, col])
+                except:
+                    # if there's a syntax error, the spreadsheet grid will
+                    # figure it out when it loads
+                    pass
+
+    # deserializes serialized cells and returns a string dictionary suitable
+    # for loading via loadRawCells()
+    @staticmethod
+    def deserializeRawCells(data: Union[str, None]):
+        res = {}
         if data is None or data == '':
             return
         curRow, curCol = None, None
@@ -101,8 +129,9 @@ class Cell(object):
                 curCol = int(entities[i])
             else:
                 deEscaped = entities[i].replace('\\,', ',')
-                Cell.setRaw(curRow, curCol, deEscaped)
+                res[curRow, curCol] = deEscaped
             i += 1
+        return res
 
     # Returns computed value of cell (with appropriate type/formula result)
     def value(self):
