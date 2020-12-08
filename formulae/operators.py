@@ -11,10 +11,11 @@ import random
 class Operator(object):
     _operators = {}
 
-    def __init__(self, name, func, numerical=True):
+    def __init__(self, name, func, numerical=True, operandLimit=None):
         self.name = name
         self.func = func
         self.numerical = numerical
+        self.operandLimit = operandLimit
         Operator._operators[self.name] = self
 
     def _numberizeOperands(self, operands):
@@ -33,6 +34,8 @@ class Operator(object):
 
     def operate(self, operands):
         # TODO: make this more robust
+        if self.operandLimit and len(operands) > self.operandLimit:
+            raise Exception('Too many operands')
         if self.numerical:
             operands = self._numberizeOperands(operands)
         return self.func(operands)
@@ -75,25 +78,21 @@ def mode(operands):
             mostFrequentElements.append(el)
     return average(mostFrequentElements)
 
-def literal(operands):
-    if len(operands) > 1:
-        raise Exception('Literal expressions may only have one operand')
-    return operands[0]
-
 # OPERATOR DEFINITIONS
 
 # Utility operator for literal formulae
-Operator('LITERAL', literal, numerical=False)
+Operator('LITERAL', lambda x: x[0], numerical=False, operandLimit=1)
 
 Operator('COUNT', lambda x: len(x), numerical=False)
 
+Operator('ABS', lambda x: abs(x[0]), operandLimit=1)
 Operator('ADD', sum)
 Operator('AVERAGE', average)
-Operator('DIVIDE', lambda x: x[0] / math.prod(x[1:]))
+Operator('DIVIDE', lambda x: x[0] / math.prod(x[1:]), operandLimit=2)
 Operator('MIN', safe(min))
 Operator('MAX', safe(max))
 Operator('MODE', mode)
 Operator('MULTIPLY', math.prod)
 Operator('RAND', lambda x: random.random())  # TODO: Figure out how to stop this recomputing when scrolling!
-Operator('SUBTRACT', lambda x: x[0] - sum(x[1:]))
+Operator('SUBTRACT', lambda x: x[0] - sum(x[1:]), operandLimit=2)
 Operator('SUM', sum)
