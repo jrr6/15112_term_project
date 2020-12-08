@@ -398,25 +398,30 @@ class SpreadsheetGrid(UIElement):
             return
         cols, colRefs = self.getSelectedColumnRefs()
         upperLeft = colRefs[cols[0]][0]
-        maxColLen = max([len(colRefs[col]) for col in cols])
-        maxRowLen = len(cols)
-        squareSize = max(maxRowLen, maxColLen)
-        cells = [[CellRef(row + upperLeft.row, col + upperLeft.col)
-                  for row in range(squareSize)] for col in range(squareSize)]
+        numRows = max([len(colRefs[col]) for col in cols])
+        numCols = len(cols)
+        squareSize = max(numRows, numCols)
 
         oldValues = {}
-        for row in cells:
-            for cellRef in row:
-                oldValues[cellRef] = Cell.getRaw(cellRef.row, cellRef.col)
+        for row in range(numRows):
+            for col in range(numCols):
+                absRow = upperLeft.row + row
+                absCol = upperLeft.col + col
+                oldValues[absRow, absCol] = Cell.getRaw(absRow, absCol)
 
-        for rowIdx in range(len(cells)):
-            for colIdx in range(len(cells[rowIdx])):
-                curRef = cells[rowIdx][colIdx]
-                oppRef = cells[colIdx][rowIdx]
-                if curRef is not None:
-                    newRaw = oldValues[oppRef]
-                    Cell.setRaw(curRef.row, curRef.col, newRaw)
-        return
+        for row in range(squareSize):
+            for col in range(squareSize):
+                # Don't wipe out cells that aren't in orig OR transpose
+                if (row < numRows and col < numCols) or\
+                        (row < numCols and col < numRows):
+                    srcRow = upperLeft.row + row
+                    srcCol = upperLeft.col + col
+                    trgRow = upperLeft.row + col
+                    trgCol = upperLeft.col + row
+                    # swap transposed cells, or clear out ones that were
+                    # part of the original but aren't part of the transpose
+                    Cell.setRaw(trgRow, trgCol,
+                                oldValues.get((srcRow, srcCol), ''))
 
     def startImport(self):
         if len(self.selectedCells) == 0:
