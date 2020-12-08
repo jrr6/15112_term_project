@@ -18,7 +18,7 @@ class Toolbar(UIElement):
         x = self.startX
         y = self.yPos
         for button in ['new', 'open', 'save', 'download', 'pie', 'bar', 'line',
-                       'scatter']:
+                       'scatter', 'transpose', 'help']:
             self.appendChild(Button(button, x, y, img=f'img/{button}.png',
                                     width=self.kButtonSize,
                                     height=self.kButtonSize,

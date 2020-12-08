@@ -31,7 +31,10 @@ class SpreadsheetScene(UIElement):
                           line=self.chartHandler(ChartType.LINE),
                           scatter=self.chartHandler(ChartType.SCATTER),
                           bar=self.chartHandler(ChartType.BAR),
-                          download=lambda: self.getChild('grid').startImport())
+                          download=lambda: self.getChild('grid').startImport(),
+                          transpose=lambda:
+                          self.getChild('grid').transposeSelection(),
+                          help=lambda: None)  # TODO: create help screen
 
         gridX = 5
         gridY = toolbar.getHeight() + 10

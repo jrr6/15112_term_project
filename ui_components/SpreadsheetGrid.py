@@ -349,8 +349,7 @@ class SpreadsheetGrid(UIElement):
                     self.scroll(arrowDir)
             else:
                 self.navigate(arrowDir)
-
-        if event.key == 'i' and event.commandDown:
+        elif event.key == 'i' and event.commandDown:
             self.startImport()
         elif event.key == 'l' and event.commandDown:
             self.insertChart(ChartType.LINE)
@@ -360,6 +359,8 @@ class SpreadsheetGrid(UIElement):
             self.insertChart(ChartType.PIE)
         elif event.key == 'b' and event.commandDown:
             self.insertChart(ChartType.BAR)
+        elif event.key == 'r' and event.commandDown:
+            self.transposeSelection()
 
     def navigate(self, arrowDir):
         if self.selectedCells == []:
@@ -390,16 +391,32 @@ class SpreadsheetGrid(UIElement):
     def isLegalScrollPos(self, row, col):
         return 0 <= row and 0 <= col < 26 - self.numCols + 1
 
-    # TODO: finish implementing
+    # transposes the currently selected region (filling in the smallest
+    # rectangular region containing all currently selected cells)
     def transposeSelection(self):
-        selectedPositions = [self.absRowColFromCellName(cell.name)
-                             for cell in self.selectedCells]
-        current = {}
-        for pos in selectedPositions:
-            current[pos] = Cell.getRaw(*pos)
+        if len(self.selectedCells) == 0:
+            return
+        cols, colRefs = self.getSelectedColumnRefs()
+        upperLeft = colRefs[cols[0]][0]
+        maxColLen = max([len(colRefs[col]) for col in cols])
+        maxRowLen = len(cols)
+        squareSize = max(maxRowLen, maxColLen)
+        cells = [[CellRef(row + upperLeft.row, col + upperLeft.col)
+                  for row in range(squareSize)] for col in range(squareSize)]
 
-        for pos in current:
-            Cell.setRaw(pos[0], pos[1], current[pos[1], pos[0]])
+        oldValues = {}
+        for row in cells:
+            for cellRef in row:
+                oldValues[cellRef] = Cell.getRaw(cellRef.row, cellRef.col)
+
+        for rowIdx in range(len(cells)):
+            for colIdx in range(len(cells[rowIdx])):
+                curRef = cells[rowIdx][colIdx]
+                oppRef = cells[colIdx][rowIdx]
+                if curRef is not None:
+                    newRaw = oldValues[oppRef]
+                    Cell.setRaw(curRef.row, curRef.col, newRaw)
+        return
 
     def startImport(self):
         if len(self.selectedCells) == 0:
@@ -437,10 +454,10 @@ class SpreadsheetGrid(UIElement):
             curCol = selCol
         return True
 
-    def insertChart(self, chartType: ChartType):
-        if len(self.selectedCells) == 0:
-            return
-        # prepare refs for cells
+    # returns a tuple of the currently selected column indices (absolute,
+    # in order) and a dictionary mapping those indices to CellRefs to the
+    # selected cells in each column
+    def getSelectedColumnRefs(self):
         colRefs = {}
         for cell in self.selectedCells:
             row, col = self.absRowColFromCellName(cell.name)
@@ -455,7 +472,14 @@ class SpreadsheetGrid(UIElement):
 
         cols = sorted(colRefs.keys())
 
-        # TODO: Dynamically determine whether to include titles
+        return cols, colRefs
+
+
+    def insertChart(self, chartType: ChartType):
+        if len(self.selectedCells) == 0:
+            return
+        cols, colRefs = self.getSelectedColumnRefs()
+
         upperLeftValue = str(colRefs[cols[0]][0].getValue())
         if upperLeftValue.isdigit():
             useTitles = False
