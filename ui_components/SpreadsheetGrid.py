@@ -120,7 +120,6 @@ class SpreadsheetGrid(UIElement):
             sender.setOutputText(None)
         else:
             try:
-                print(f'saving cell {sender.name}')
                 Cell.setRaw(row, col, sender.text)
             except:
                 sender.setOutputText('SYNTAX-ERROR')
@@ -427,11 +426,13 @@ class SpreadsheetGrid(UIElement):
                     trgCol = upperLeft.col + row
                     # swap transposed cells, or clear out ones that were
                     # part of the original but aren't part of the transpose
+                    cellToUpdate = self.getChildForAbsRowCol(trgRow, trgCol)
                     newVal = oldValues.get((srcRow, srcCol), '')
-                    # setRaw takes care of formula updating for us
-                    Cell.setRaw(trgRow, trgCol, newVal)
-                    self.getChildForAbsRowCol(trgRow, trgCol).setText(newVal)
-                    self.renderCell(*self.relRowColFromAbs(trgRow, trgCol))
+                    # this does error handling, dependency updating, etc. for us
+                    # note, however, that it assumes the cell has already
+                    # re-rendered, so we'll have to do that manually afterward
+                    cellToUpdate.setText(newVal)
+                    cellToUpdate.rerender()
 
     def startImport(self):
         if len(self.selectedCells) == 0:
@@ -454,10 +455,10 @@ class SpreadsheetGrid(UIElement):
         for row in table.rows:
             for cell in row:
                 text = cell  # Tables want to be immutable
-                if len(text) > 0 and text[0] == '=':
+                while len(text) > 0 and text[0] == '=':
                     # No arbitrary code execution!
                     text = text[1:]
-                Cell.setRaw(curRow, curCol, text)
+                Cell.setRaw(curRow, curCol, text)  # safe b/c no formulae
                 if self.absPosIsVisible(curRow, curCol):
                     uiCell = self.getChildForAbsRowCol(curRow, curCol)
                     uiCell.setOutputText(None)
