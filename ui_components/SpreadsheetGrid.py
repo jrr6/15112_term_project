@@ -117,6 +117,7 @@ class SpreadsheetGrid(UIElement):
 
         if sender.text == '':
             Cell.delete(row, col)
+            sender.setOutputText(None)
         else:
             try:
                 print(f'saving cell {sender.name}')
