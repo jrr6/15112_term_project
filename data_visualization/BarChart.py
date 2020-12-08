@@ -24,8 +24,7 @@ class BarChart(GenericChart):
         self.drawBGAndTitle(canvas)
         self.drawKey(canvas)
         self.drawSideLabels(canvas, yMinOverride=0)
-
-        # TODO: Draw x axis label (if one exists---it's the name of the indep series!)
+        self.drawXAxisLabel(canvas)
 
         # labels
         indDataLen = chartData.independentSeries.dataLength()

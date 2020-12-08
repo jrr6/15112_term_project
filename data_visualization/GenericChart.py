@@ -125,6 +125,9 @@ class GenericChart(DoubleClickable, UIElement):
             canvas.createLine(x, lineY, x, lineY - self.kGraphHeight,
                               fill='black' if i == 0 else 'gray')
 
+        self.drawXAxisLabel(canvas)
+
+    def drawXAxisLabel(self, canvas):
         graphCenter = self.kGraphStartX + self.kGraphWidth / 2
         canvas.createText(graphCenter,
                           self.kGraphBotY + self.kBottomLabelHeight,
@@ -262,8 +265,8 @@ class GenericChart(DoubleClickable, UIElement):
 
         # TODO: This seems to be crashing with multiple charts
         newRow = self.startRow + (event.y - self.startY)\
-                 / SpreadsheetGrid.rowHeight
+            / SpreadsheetGrid.rowHeight
         newCol = self.startCol + (event.x - self.startX)\
-                 / SpreadsheetGrid.colWidth
+            / SpreadsheetGrid.colWidth
 
         self.props['onMove'](self, (newRow, newCol))
