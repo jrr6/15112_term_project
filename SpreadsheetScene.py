@@ -21,11 +21,10 @@ class SpreadsheetScene(UIElement):
         # TODO: This could probably be even bigger
         super().__init__('scene', 0, 0, {})
         self.kGridX = 5
-        self.kDefaultSheetPrefix = 'Sheet'
         self.width = 2 * self.kGridX + SpreadsheetGrid.siderWidth\
             + SpreadsheetGrid.numCols * SpreadsheetGrid.colWidth
         self.height = 750
-        self.sheets = [Sheet(self.kDefaultSheetPrefix + '1', {}, [])]
+        self.sheets = [Sheet.defaultEmpty()]
         self.activeSheet = 0
 
     def initChildren(self):
@@ -70,7 +69,7 @@ class SpreadsheetScene(UIElement):
                                        gridY + grid.getHeight(),
                                        sheets=self.sheets,
                                        active=self.activeSheet,
-                                       onSelect=self.openSheet,
+                                       onSelect=self.saveCurrentSheetAndOpen,
                                        onAdd=self.createSheet))
 
     def getWidth(self):
@@ -89,16 +88,18 @@ class SpreadsheetScene(UIElement):
 
     def createSheet(self):
         newIdx = len(self.sheets)
-        name = self.kDefaultSheetPrefix + str(newIdx + 1)
+        name = Sheet.kDefaultSheetPrefix + str(newIdx + 1)
         self.sheets.append(Sheet(name, {}, []))
-        self.getChild('sheet-select').refresh()
-        self.openSheet(newIdx)
+        # we don't need to refresh sheet selector b/c sCSAO does it for us
+        self.saveCurrentSheetAndOpen(newIdx)
 
-    def openSheet(self, sheetIndex):
+    def saveCurrentSheetAndOpen(self, sheetIndex):
         # save the current sheet
         self.storeCurrentSheet()
-
         # open the new sheet
+        self.openSheet(sheetIndex)
+
+    def openSheet(self, sheetIndex):
         Cell.loadRawCells(self.sheets[sheetIndex].cells)
         self.getChild('grid').reload(self.sheets[sheetIndex].charts)
         self.activeSheet = sheetIndex
@@ -111,10 +112,14 @@ class SpreadsheetScene(UIElement):
         self.sheets[self.activeSheet].cells = Cell.getRawCells()
 
     def newDoc(self):
-        curChartsEmpty = len(self.getChild('grid').charts) == 0
-        curCellsEmpty = Cell.empty()
+        self.storeCurrentSheet()
+        isUnmodified = len(self.sheets) == 1
+        if isUnmodified:
+            firstSheetUnmodified = (len(self.sheets[0].charts) == 0
+                                    and len(self.sheets[0].cells) == 0)
+            isUnmodified = isUnmodified and firstSheetUnmodified
 
-        if not (curChartsEmpty and curCellsEmpty):
+        if not isUnmodified:
             self.runModal(Confirmation(
                 message='Do you want to create a new document? '
                         'Unsaved changes will be lost.',
@@ -128,8 +133,11 @@ class SpreadsheetScene(UIElement):
         return handler
 
     def resetDoc(self):
-        Cell.loadRawCells(None)
-        self.getChild('grid').reload([])
+        # keep the ref to self.sheets so we don't have to re-assign props to
+        # the sheet selector
+        self.sheets.clear()
+        self.sheets.append(Sheet.defaultEmpty())
+        self.openSheet(0)
 
     def save(self):
         self.storeCurrentSheet()
@@ -219,10 +227,16 @@ class SpreadsheetScene(UIElement):
 
 
 class Sheet:
+    kDefaultSheetPrefix = 'Sheet'
+
     def __init__(self, name: str, cells: dict, charts: list):
         self.name = name
         self.cells = cells
         self.charts = charts
+
+    @staticmethod
+    def defaultEmpty():
+        return Sheet(Sheet.kDefaultSheetPrefix + '1', {}, [])
 
 if __name__ == '__main__':
     App.load('SimpleSheets', SpreadsheetScene())

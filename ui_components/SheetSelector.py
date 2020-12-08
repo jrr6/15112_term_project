@@ -23,7 +23,6 @@ class SheetSelector(UIElement):
         xPos = 0
         for i in range(len(sheets)):
             fill = self.kActiveColor if i == self.props['active'] else None
-            print(self.props['active'])
             self.appendChild(Button(str(i), xPos, 0, text=sheets[i].name,
                                     width=self.kSheetButtonWidth,
                                     height=self.kButtonHeight,
@@ -35,10 +34,15 @@ class SheetSelector(UIElement):
                                 width=self.kAddButtonWidth,
                                 height=self.kButtonHeight,
                                 action=lambda _: self.props['onAdd']()))
+        self.makeKeyListener()
 
     def refresh(self):
         self.removeAllChildren()
         self.initChildren()
+
+    def onKeypress(self, event):
+        if event.key == '=' and event.commandDown:
+            self.props['onAdd']()
 
     def getWidth(self):
         return self.kSheetButtonWidth * len(self.props['sheets'])\

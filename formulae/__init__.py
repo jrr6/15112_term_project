@@ -83,7 +83,7 @@ class Cell(object):
     def serializeRaw(rawCells):
         result = ''
         for cellLoc in rawCells:
-            cellRaw = Cell._cells[cellLoc]
+            cellRaw = rawCells[cellLoc]
             escaped = cellRaw.replace(',', '\\,')
             result += f'{cellLoc[0]},{cellLoc[1]},{escaped},'
         result = result[:-1]  # strip trailing comma
