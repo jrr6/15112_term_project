@@ -70,8 +70,6 @@ class TextField(UIElement):
         if self.props.get('editable', True) and not self.active:
             self.activate()
 
-    # TODO: we never resign key listener until deactivate, which means we end up
-    #       with multiple text fields selected at once
     def activate(self):
         self.removeChild('placeholder')
         self.getChild('border').props['fill'] = 'lightblue'

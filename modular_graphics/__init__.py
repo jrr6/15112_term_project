@@ -122,7 +122,8 @@ class UIElement(ABC):
         listeners = App.keyListeners
         if self not in listeners:
             if ephemeral:
-                if App.ephemeralListener is not None:
+                if App.ephemeralListener is not None\
+                        and App.ephemeralListener is not self:
                     App.ephemeralListener.onResignKeyListener()
                 App.ephemeralListener = self
             else:
