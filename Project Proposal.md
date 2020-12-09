@@ -59,5 +59,5 @@ Due to the implementation of data visualization taking slightly longer than expe
 
 # TP 3 Update
 
-As expected, I did not have time to take on linear programming between TP2 and TP3. Instead, I implemented multiple spreadsheets and data transposition, which makes it considerably easier to ensure data is in the right format for plotting, as well as a better graphical UI, support for entering "cell blocks" in formulas, improved keyboard navigation, and auto-detection of the presence of series titles in charts.
+As expected, I did not have time to take on linear programming between TP2 and TP3. Instead, I implemented multiple spreadsheets and data transposition, which makes it considerably easier to ensure data is in the right format for plotting, as well as a better graphical UI, support for entering "cell blocks" in formulas, improved keyboard navigation, and auto-detection of the presence of series titles in charts, among other features.
 
