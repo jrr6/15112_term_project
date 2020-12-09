@@ -133,8 +133,8 @@ class ChartData:
         if data == '':
             return
         entities = splitEscapedString(data, '|')
-        ident = entities[0]
-        type = ChartType(int(entities[1]))
+        ident = int(entities[0])
+        chType = ChartType(int(entities[1]))
         row = float(entities[2])
         col = float(entities[3])
         xMin = int(entities[4]) if entities[4] != '' else None
@@ -146,5 +146,5 @@ class ChartData:
         # everything else in dependent series
         depSeries = [Series.deserialize(seriesData)
                      for seriesData in entities[10:]]
-        return ChartData(ident, type, title, indepSeries, depSeries, xMin, xMax,
-                         yMin, yMax, row, col)
+        return ChartData(ident, chType, title, indepSeries, depSeries, xMin,
+                         xMax, yMin, yMax, row, col)

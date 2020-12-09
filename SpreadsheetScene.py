@@ -198,7 +198,7 @@ class SpreadsheetScene(UIElement):
             lastSep = path.rfind('/')
             if lastSep > -1:
                 parentDir = path[:lastSep]
-                os.makedirs(parentDir)
+                os.makedirs(parentDir, exist_ok=True)
             self.doWrite(path, data)
 
     def doWrite(self, path, data):

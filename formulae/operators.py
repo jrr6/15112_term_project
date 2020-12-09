@@ -96,6 +96,7 @@ Operator('MIN', safe(min))
 Operator('MAX', safe(max))
 Operator('MODE', mode)
 Operator('MULTIPLY', math.prod)
+Operator('POW', lambda x: pow(x[0], x[1]), operandLimit=2)
 Operator('RAND', lambda x: random.random())  # TODO: Figure out how to stop this recomputing when scrolling!
 Operator('SUBTRACT', lambda x: x[0] - sum(x[1:]), operandLimit=2)
 Operator('SUM', sum)

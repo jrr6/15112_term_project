@@ -81,7 +81,7 @@ class SpreadsheetGrid(UIElement):
         previewY = (1 + self.numRows) * self.rowHeight
         self.appendChild(UICell('preview', 0, previewY, placeholder='',
                                 width=self.getWidth(), height=self.rowHeight,
-                                fill='white', editable=False, visibleChars=115))
+                                fill='white', editable=False, visibleChars=155))
 
         # UI scaffolding: cover the corner and ensure right line stays
         self.appendChild(Rectangle('hider', 0, 0, width=self.siderWidth,
