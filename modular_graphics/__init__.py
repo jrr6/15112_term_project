@@ -109,6 +109,9 @@ class UIElement(ABC):
     def onDrag(self, event):
         pass
 
+    def onMouseRelease(self):
+        pass
+
     def onKeypress(self, event):
         pass
 
@@ -140,6 +143,7 @@ class UIElement(ABC):
 class EventType(Enum):
     CLICK = 0
     DRAG = 1
+    RELEASE = 2
 
 class App(CMUApp, UIElement):
     instance = None
@@ -174,6 +178,9 @@ class App(CMUApp, UIElement):
     def mouseDragged(self, event):
         # Sadly, MouseMotionEvents don't capture state, so no metadata
         self.sendMouseEventToChildren(self, event, EventType.DRAG)
+
+    def mouseReleased(self, event):
+        self.sendMouseEventToChildren(self, event, EventType.RELEASE)
 
     def sendMouseEventToChildren(self, element: UIElement, event, evtType):
         childIdx = len(element.children) - 1
@@ -211,7 +218,10 @@ class App(CMUApp, UIElement):
             elementX = element.x
             elementY = element.y
 
-        if (elementX <= eventStartX <= elementX + element.getWidth() and
+        # everyone gets release, we don't care where it happened
+        if evtType == EventType.RELEASE:
+            element.onMouseRelease()
+        elif (elementX <= eventStartX <= elementX + element.getWidth() and
                 elementY <= eventStartY <= elementY + element.getHeight()):
             # This would be easier with copy.(deep)copy, but we get pickling
             # errors

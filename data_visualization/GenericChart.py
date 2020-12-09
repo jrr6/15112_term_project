@@ -269,9 +269,9 @@ class GenericChart(DoubleClickable, UIElement):
 
         # Just in case 112_graphics doesn't do what it's supposed to...
         if self.startX is None:
-            self.startX = event.x
+            self.startX = event.x + self.x
         if self.startY is None:
-            self.startY = event.y
+            self.startY = event.y + self.y
         if self.startRow is None:
             self.startRow = self.props['data'].row
         if self.startCol is None:
@@ -284,3 +284,7 @@ class GenericChart(DoubleClickable, UIElement):
             / SpreadsheetGrid.colWidth
 
         self.props['onMove'](self, (newRow, newCol))
+
+    def onMouseRelease(self):
+        self.startX = None
+        self.startY = None
