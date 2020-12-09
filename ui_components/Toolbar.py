@@ -2,6 +2,8 @@
 # Joseph Rotella (jrotella, F0)
 #
 # Contains UI code for toolbar element.
+# Note: Icons were created by me using Affinity Designer.
+
 from modular_graphics import UIElement
 from modular_graphics.input_elements import Button
 

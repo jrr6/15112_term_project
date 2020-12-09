@@ -8,8 +8,8 @@ from data_visualization import ChartData, ChartType
 from formulae import Cell
 from modular_graphics import UIElement, App
 from modular_graphics.atomic_elements import Rectangle
-from ui_components import SpreadsheetGrid, Confirmation, FileSelector, Toolbar,\
-    SheetSelector
+from ui_components import SpreadsheetGrid, Confirmation, FileSelector, Toolbar, \
+    SheetSelector, HelpScreen
 
 
 class SpreadsheetScene(UIElement):
@@ -37,7 +37,7 @@ class SpreadsheetScene(UIElement):
                           download=lambda: self.getChild('grid').startImport(),
                           transpose=lambda:
                           self.getChild('grid').transposeSelection(),
-                          help=lambda: None)  # TODO: create help screen
+                          help=lambda: self.runModal(HelpScreen()))
 
         gridX = self.kGridX
         gridY = toolbar.getHeight() + 10
