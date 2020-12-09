@@ -10,6 +10,7 @@ from modular_graphics import UIElement, App
 from modular_graphics.atomic_elements import Rectangle
 from ui_components import SpreadsheetGrid, Confirmation, FileSelector, Toolbar, \
     SheetSelector, HelpScreen
+from utils import splitEscapedString
 
 
 class SpreadsheetScene(UIElement):
@@ -230,10 +231,13 @@ class SpreadsheetScene(UIElement):
                         curSheetCells = Cell.deserializeRawCells(lines[i])
                     elif i % 3 == 2:
                         # charts line
-                        chartStrs = lines[i].split(
+                        chartStrs = splitEscapedString(lines[i],
                             SpreadsheetScene.kChartDelimiter)
                         curSheetCharts = []
                         for chartStr in chartStrs:
+                            chartStr = chartStr.replace(
+                                '\\' + SpreadsheetScene.kChartDelimiter,
+                                SpreadsheetScene.kChartDelimiter)
                             chart = ChartData.deserialize(chartStr)
                             if chart is not None:
                                 curSheetCharts.append(chart)

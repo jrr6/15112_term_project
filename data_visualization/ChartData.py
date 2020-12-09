@@ -113,7 +113,7 @@ class ChartData:
 
         # Replace the delimeter used by SpreadsheetApp so it doesn't need to
         title = self.title.replace('|', '\\|')\
-            .replace(SpreadsheetScene.kChartDelimiter, '')
+            .replace(SpreadsheetScene.kChartDelimiter, '\\/')
         xMin = str(self.xMin) if self.xMin is not None else ''
         xMax = str(self.xMax) if self.xMax is not None else ''
         yMin = str(self.yMin) if self.yMin is not None else ''
