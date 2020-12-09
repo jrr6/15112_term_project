@@ -11,3 +11,4 @@ from ui_components.WebImporter import WebImporter
 from ui_components.ChartConfiguration import ChartConfiguration
 from ui_components.Toolbar import Toolbar
 from ui_components.SheetSelector import SheetSelector
+from ui_components.SheetConfiguration import SheetConfiguration

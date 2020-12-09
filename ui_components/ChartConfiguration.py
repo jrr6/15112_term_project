@@ -11,7 +11,7 @@ class ChartConfiguration(ModalView):
     def __init__(self, **props):
         super().__init__(props)
         self.width = 400
-        self.height = 485
+        self.height = 600
         self.rowHeight = 40
         self.headerY = 20
         self.col1Start = (10, self.headerY + self.rowHeight)
@@ -93,8 +93,6 @@ class ChartConfiguration(ModalView):
                                    placeholder=None, **extraArgs))
 
     def onSave(self, _):
-        # TODO: For some reason, saving charts occasionally makes them "jump"
-
         chartData = self.props['data']
 
         xMin = self.getChild('xmin').text

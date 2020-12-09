@@ -68,7 +68,9 @@ class SpreadsheetScene(UIElement):
                                        sheets=self.sheets,
                                        active=self.activeSheet,
                                        onSelect=self.saveCurrentSheetAndOpen,
-                                       onAdd=self.createSheet))
+                                       onAdd=self.createSheet,
+                                       onDelete=self.deleteSheet,
+                                       onRename=self.renameSheet))
 
     def getWidth(self):
         return self.width
@@ -94,20 +96,40 @@ class SpreadsheetScene(UIElement):
     def saveCurrentSheetAndOpen(self, sheetIndex):
         # save the current sheet
         self.storeCurrentSheet()
-        # open the new sheet
-        self.openSheet(sheetIndex)
+        # open the new sheet, except avoid reload if we're re-opening the same
+        if sheetIndex != self.activeSheet:
+            # don't reopen the existing sheet
+            # (since this would also mess up double-click to configure)
+            self.openSheet(sheetIndex)
 
     def openSheet(self, sheetIndex):
         Cell.loadRawCells(self.sheets[sheetIndex].cells)
         self.getChild('grid').reload(self.sheets[sheetIndex].charts)
         self.activeSheet = sheetIndex
         self.getChild('sheet-select').props['active'] = sheetIndex
+        # TODO: If we didn't wipe everything out every time, we could make 2x-
+        #       clicking without first selecting trigger config
         self.getChild('sheet-select').refresh()
 
     # loads the modified sheet contents into the app-level sheets list
     def storeCurrentSheet(self):
         self.sheets[self.activeSheet].charts = self.getChild('grid').charts
         self.sheets[self.activeSheet].cells = Cell.getRawCells()
+
+    def deleteSheet(self, index):
+        print('delete', index)
+        if index > self.activeSheet:
+            nextSheet = self.activeSheet
+        else:
+            nextSheet = max(self.activeSheet - 1, 0)
+        self.sheets.pop(index)
+        if len(self.sheets) == 0:
+            self.sheets.append(Sheet.defaultEmpty())
+        self.openSheet(nextSheet)
+
+    def renameSheet(self, index, name):
+        self.sheets[index].name = name
+        self.getChild('sheet-select').refresh()
 
     def newDoc(self):
         self.storeCurrentSheet()

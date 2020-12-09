@@ -134,7 +134,7 @@ class TextField(UIElement):
     def getWidth(self):
         return self.width
 
-class Button(UIElement):
+class Button(DoubleClickable, UIElement):
     def __init__(self, name, x, y, **props):
         super().__init__(name, x, y, props)
         self.width = props.get('width', 75)
@@ -153,8 +153,12 @@ class Button(UIElement):
                                    anchor='nw'))
 
     def onClick(self, event):
-        if 'action' in self.props:
-            self.props['action'](self)
+        if self.isDoubleClick():
+            if 'doubleClickAction' in self.props:
+                self.props['doubleClickAction'](self)
+        else:
+            if 'action' in self.props:
+                self.props['action'](self)
 
     def getHeight(self):
         if self.hasChild('label-img'):

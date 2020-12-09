@@ -276,10 +276,11 @@ class App(CMUApp, UIElement):
     # Shows a modal, blocking all UI interaction outside of the modal until it
     # is dismissed
     def runModal(self, view):
+        modalY = 100
         from modular_graphics.modal import Modal
         name = f'modal{self.curModalId}'
         self.appendChild(Modal(
-            name, (self.width - view.getWidth()) // 2, 50, view=view,
+            name, (self.width - view.getWidth()) // 2, modalY, view=view,
             onDismiss=lambda name=name: self._dismissModal(name)))
         self.curModalId += 1
 

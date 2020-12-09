@@ -81,7 +81,6 @@ class UICell(DoubleClickable, UIElement):
             self.props['onSelect'](self, modifier)
 
     def activate(self):
-        print('activate', self.name)
         self.removeChild('placeholder')
         self.getChild('border').props['fill'] = 'lightblue'
         self.makeKeyListener()
