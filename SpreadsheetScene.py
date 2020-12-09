@@ -196,6 +196,8 @@ class SpreadsheetScene(UIElement):
                 # other "clever" Python built-ins are a bad idea
                 lines = file.read().split('\n')
 
+                self.sheets.clear()
+
                 curSheetName = ''
                 curSheetCells = []
                 curSheetCharts = []
@@ -217,6 +219,9 @@ class SpreadsheetScene(UIElement):
                                 curSheetCharts.append(chart)
                         self.sheets.append(
                             Sheet(curSheetName, curSheetCells, curSheetCharts))
+
+                if len(self.sheets) == 0:  # in case file empty
+                    self.sheets.append(Sheet.defaultEmpty())
 
                 # open the first sheet, which also reloads the grid
                 self.openSheet(0)

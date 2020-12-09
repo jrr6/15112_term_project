@@ -11,11 +11,11 @@ class Toolbar(UIElement):
         super().__init__(name, x, y, props)
         self.kButtonSize = 40
         self.kButtonStep = self.kButtonSize + 10
-        self.startX = 30
+        self.xStart = 30
         self.yPos = 3
 
     def initChildren(self):
-        x = self.startX
+        x = self.xStart
         y = self.yPos
         for button in ['new', 'open', 'save', 'download', 'pie', 'bar', 'line',
                        'scatter', 'transpose', 'help']:

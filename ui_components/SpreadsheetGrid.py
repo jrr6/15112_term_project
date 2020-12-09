@@ -638,6 +638,8 @@ class SpreadsheetGrid(UIElement):
         self.selectedCells = []
         self.highlighted = []
         self.activeCell = None
+        self.curLeftCol = 0
+        self.curTopRow = 0
         self.charts = charts
         self.removeAllChildren()
         self.initChildren()
