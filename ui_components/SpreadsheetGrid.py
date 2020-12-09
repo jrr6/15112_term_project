@@ -36,7 +36,6 @@ class SpreadsheetGrid(UIElement):
 
     def draw(self, canvas):
         super().draw(canvas)
-        # canvas.createLine(self.getWidth(), 0, self.getWidth(), self.getHeight(), fill='purple')
 
     def initChildren(self):
         # Order to ensure correct overlapping:
@@ -229,7 +228,6 @@ class SpreadsheetGrid(UIElement):
                 self.highlighted.append(child)
 
     def setSelectedCells(self, sender, modifier):
-        # TODO: Incongruous cell appearance when command-double-clicking
         if self.activeCell and self.activeCell is not sender:
             self.activeCell.finishEditing()
 
@@ -561,6 +559,8 @@ class SpreadsheetGrid(UIElement):
         # TODO: Don't draw wildly off-screen charts
         x, y = self.getChartCoords(chartData)
 
+        # Idea of map of callables in lieu of switch statement from:
+        # https://jaxenter.com/implement-switch-case-statement-python-138315.html
         chartTypeMap = {
             ChartType.PIE: PieChart,
             ChartType.LINE: LineChart,

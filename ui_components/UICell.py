@@ -55,7 +55,8 @@ class UICell(DoubleClickable, UIElement):
     def onClick(self, event):
         if (self.props.get('editable', True)
                 and not self.active
-                and self.isDoubleClick()):
+                and self.isDoubleClick()  # ensure this isn't short-circuited
+                and not event.commandDown):
             self.activate()
         else:
             if event.shiftDown:
@@ -103,7 +104,6 @@ class UICell(DoubleClickable, UIElement):
     # exits active (editing) mode WITHOUT saving (call finishEditing to save!)
     # NOTE: does NOT deselect (cells stay selected after editing finishes!)
     def deactivate(self):
-        print('deactivate', self.name)
         self.active = False
         self.getChild('border').props['fill'] = None
         self._renderText(False)
