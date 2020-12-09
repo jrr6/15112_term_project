@@ -118,7 +118,6 @@ class SpreadsheetScene(UIElement):
         self.sheets[self.activeSheet].cells = Cell.getRawCells()
 
     def deleteSheet(self, index):
-        print('delete', index)
         if index > self.activeSheet:
             nextSheet = self.activeSheet
         else:

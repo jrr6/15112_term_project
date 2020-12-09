@@ -58,7 +58,6 @@ class Cell(object):
         cell.raw = text
         if len(cell.raw) > 0 and cell.raw[0] == '=':
             cell.formula = Formula.fromText(cell.raw)
-            print('cell.formula =', cell.formula, 'with deps', cell.formula.getDependencies())
             Cell._deps.setDependencies(CellRef(row, col),
                                        cell.formula.getDependencies())
         else:
@@ -265,7 +264,6 @@ class Formula(object):
         if ':' in text:
             cells = text.split(':')
             if len(cells) != 2:
-                print('i')
                 raise Exception('Illegal cell range format')
             cell0 = Formula._getCellOrLiteral(cells[0])[0]
             cell1 = Formula._getCellOrLiteral(cells[1])[0]

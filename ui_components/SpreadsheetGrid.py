@@ -222,7 +222,6 @@ class SpreadsheetGrid(UIElement):
         row, col = self.absRowColFromCellName(self.activeCell.name)
         for depRef in Cell.getShallowDependencies(row, col):
             if self.absPosIsVisible(depRef.row, depRef.col):
-                print('highlighting dep', depRef)
                 child = self.getChildForAbsRowCol(depRef.row, depRef.col)
                 child.highlight('orange')
                 self.highlighted.append(child)
