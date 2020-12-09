@@ -3,11 +3,11 @@
 #
 # Operator class and definitions.
 
-# defines an abstract operator on arbitrarily many (numerical) operands
 import math
 import random
 
 
+# defines an abstract operator on arbitrarily many (numerical) operands
 class Operator(object):
     _operators = {}
 
