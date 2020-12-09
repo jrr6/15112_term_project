@@ -188,16 +188,19 @@ class App(CMUApp, UIElement):
         if evtType == EventType.DRAG:
             if self.dragStart is None:
                 # this shouldn't happen (i.e., we should always get clicks
-                # before drags), but somehow it does... let's just assume we
+                # before drags), but just in case... let's just assume we
                 # can't trust 112_graphics
                 self.dragStart = (event.x, event.y)
             eventStartX, eventStartY = self.dragStart
             # Hacky workaround so that dragging charts works
-            if 'startX' in element.__dict__:
+            # TODO: This means that if you click a modal's OK button
+            #       (e.g., to open new doc) and hold, you end up dragging
+            #       the chart to weird places...
+            if 'startX' in element.__dict__ and element.startX is not None:
                 elementX = element.startX
             else:
                 elementX = element.x
-            if 'startY' in element.__dict__:
+            if 'startY' in element.__dict__ and element.startY is not None:
                 elementY = element.startY
             else:
                 elementY = element.y
@@ -207,8 +210,6 @@ class App(CMUApp, UIElement):
             elementX = element.x
             elementY = element.y
 
-        # TODO: This causes charts to "lose" their drag when they move
-        #       too far (they stop covering the original click point)
         if (elementX <= eventStartX <= elementX + element.getWidth() and
                 elementY <= eventStartY <= elementY + element.getHeight()):
             # This would be easier with copy.(deep)copy, but we get pickling

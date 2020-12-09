@@ -267,6 +267,16 @@ class GenericChart(DoubleClickable, UIElement):
     def onDrag(self, event):
         from ui_components import SpreadsheetGrid
 
+        # Just in case 112_graphics doesn't do what it's supposed to...
+        if self.startX is None:
+            self.startX = event.x
+        if self.startY is None:
+            self.startY = event.y
+        if self.startRow is None:
+            self.startRow = self.props['data'].row
+        if self.startCol is None:
+            self.startCol = self.props['data'].col
+
         # TODO: This seems to be crashing with multiple charts
         # again, work in absolute coords (sigh)
         newRow = self.startRow + (event.y + self.y - self.startY)\
