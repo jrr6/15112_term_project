@@ -1,3 +1,8 @@
+# PieChart.py
+# Joseph Rotella (jrotella, F0)
+#
+# Contains UI code for pie chart data visualization.
+
 from data_visualization.GenericChart import GenericChart
 import math
 

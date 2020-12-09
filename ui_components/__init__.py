@@ -1,3 +1,8 @@
+# ui_components
+# Joseph Rotella (jrotella, F0)
+#
+# Contains various UI components.
+
 from ui_components.UICell import UICell
 from ui_components.SpreadsheetGrid import SpreadsheetGrid
 from ui_components.Confirmation import Confirmation
