@@ -10,10 +10,12 @@ Keyboard Shortcuts:
 * Option-Arrow keys: Scroll the spreadsheet
 * Command-S: Save file (recursively creates any necessary directories)
 * Command-O: Open file
+* Command-N: New file
 * Command-P: Insert a pie chart with the selected data
 * Command-T: Insert a scatter plot with the selected data
 * Command-L: Insert a line chart with the selected data
 * Command-B: Insert a bar chart with the selected data
 * Command-R: Transpose selected data
+* Command-=: Create spreadsheet
 * Shift-Click: Block select
 * Command-Click: Piecemeal select
