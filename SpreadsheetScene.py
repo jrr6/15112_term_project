@@ -4,13 +4,11 @@
 # Main code file -- contains top-level UI for spreadsheet app
 import os
 
-from data_visualization import BarChart, PieChart, ChartData, Series, ChartType, \
-    ScatterChart
-from data_visualization.LineChart import LineChart
+from data_visualization import ChartData, ChartType
 from formulae import Cell
 from modular_graphics import UIElement, App
-from modular_graphics.atomic_elements import Rectangle, Image
-from ui_components import SpreadsheetGrid, Confirmation, FileSelector, Toolbar, \
+from modular_graphics.atomic_elements import Rectangle
+from ui_components import SpreadsheetGrid, Confirmation, FileSelector, Toolbar,\
     SheetSelector
 
 

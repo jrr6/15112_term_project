@@ -277,7 +277,6 @@ class GenericChart(DoubleClickable, UIElement):
         if self.startCol is None:
             self.startCol = self.props['data'].col
 
-        # TODO: This seems to be crashing with multiple charts
         # again, work in absolute coords (sigh)
         newRow = self.startRow + (event.y + self.y - self.startY)\
             / SpreadsheetGrid.rowHeight
