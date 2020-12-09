@@ -3,6 +3,7 @@
 #
 # A framework atop 112 graphics that allows for modular UI elements with
 # independent states and event-driven design patterns.
+# *Very* loosely inspired by the design of the React framework.
 import copy
 from enum import Enum
 
