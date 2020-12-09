@@ -21,15 +21,18 @@ class Operator(object):
     def _numberizeOperands(self, operands):
         newOperands = []
         for operand in operands:
-            if isinstance(operand, int):
+            if isinstance(operand, int) or isinstance(operand, float):
                 newOperands.append(operand)
             else:
                 try:
                     newOperands.append(int(operand.replace(',', '')))
                 except:
-                    # TODO: should we "zeroify" or just skip?
-                    # newOperands.append(0)
-                    pass
+                    try:
+                        newOperands.append(float(operand.replace(',', '')))
+                    except:
+                        # TODO: should we "zeroify" or just skip?
+                        # newOperands.append(0)
+                        pass
         return newOperands
 
     def operate(self, operands):
